@@ -539,12 +539,12 @@ async function loadDiaryStudents() {
   const dr = await fetch(`/api/diary?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}&date=${date}`);
   const existing = dr.ok ? await dr.json() : [];
   const existingMap = {};
-  existing.forEach(e => { existingMap[e.student_id] = e; });
+  existing.forEach(e => { existingMap[String(e.student_id)] = e; });
 
   const tbody = document.getElementById('diary-bulk-tbody');
   tbody.innerHTML = '';
   students.forEach(s => {
-    const ex = existingMap[s.id] || {};
+    const ex = existingMap[String(s.id)] || {};
     const tr = document.createElement('tr');
     tr.dataset.studentId = s.id;
     tr.innerHTML = `
@@ -633,8 +633,9 @@ async function loadUtStudents() {
   // existingMap[student_id][subject] = row
   const existingMap = {};
   existing.forEach(e => {
-    if (!existingMap[e.student_id]) existingMap[e.student_id] = {};
-    existingMap[e.student_id][e.subject] = e;
+    const sid = String(e.student_id);
+    if (!existingMap[sid]) existingMap[sid] = {};
+    existingMap[sid][e.subject] = e;
   });
 
   document.getElementById('ut-bulk-title').textContent = `${test} — ${cls} — ${year}`;
@@ -676,7 +677,7 @@ async function loadUtStudents() {
     `;
 
     utSubjects.forEach(subj => {
-      const ex = (existingMap[s.id] && existingMap[s.id][subj.name]) || {};
+      const ex = (existingMap[String(s.id)] && existingMap[String(s.id)][subj.name]) || {};
       let subjTotal = 0;
       subj.parts.forEach((p, pi) => {
         const val = ex[`part${pi+1}_marks`] || '';

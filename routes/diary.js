@@ -30,6 +30,7 @@ router.get('/', async (req, res) => {
   // Flatten for compatibility with local format
   const flat = rows.map(r => ({
     ...r,
+    student_id: String(r.student_id),
     student_name: r.cloud_students?.name,
     roll_no: r.cloud_students?.roll_no,
     class_name: r.cloud_students?.class_name,

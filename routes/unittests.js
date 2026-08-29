@@ -88,9 +88,10 @@ router.get('/', async (req, res) => {
   if (school) rows = rows.filter(r => r.cloud_students?.school === school);
   if (class_name) rows = rows.filter(r => r.cloud_students?.class_name === class_name);
 
-  // Flatten
+  // Flatten — convert student_id to string for consistent frontend lookup
   const flat = rows.map(r => ({
     ...r,
+    student_id: String(r.student_id),
     student_name: r.cloud_students?.name,
     roll_no: r.cloud_students?.roll_no,
     class_name: r.cloud_students?.class_name,
