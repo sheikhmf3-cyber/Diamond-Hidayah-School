@@ -112,6 +112,7 @@
     <div class="tab active" onclick="switchTab('reportcard')">📋 Report Cards</div>
     <div class="tab" onclick="switchTab('diary')">📖 Daily Diary</div>
     <div class="tab" onclick="switchTab('unittest')">✏️ Unit Tests</div>
+    <div class="tab" onclick="switchTab('reports')">📊 Reports</div>
   </div>
 
   <div class="content">
@@ -325,6 +326,80 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════ REPORTS TAB ═══════════════════════════════ -->
+    <div id="tab-reports" style="display:none;">
+
+      <!-- Filter bar -->
+      <div class="card">
+        <h2>📊 Reports & View</h2>
+        <div class="form-row" style="align-items:flex-end;">
+          <div class="form-group">
+            <label>Report Type</label>
+            <select id="rpt-type" onchange="onReportTypeChange()">
+              <option value="">— Select Report —</option>
+              <option value="reportcard">Report Card</option>
+              <option value="unittest">Unit Test Marks</option>
+              <option value="diary">Daily Diary</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>School</label>
+            <select id="rpt-school" onchange="loadRptClasses()">
+              <option value="">— Select School —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Class</label>
+            <select id="rpt-class" onchange="onRptClassChange()">
+              <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group" id="rpt-student-group">
+            <label>Student</label>
+            <select id="rpt-student">
+              <option value="">— All Students —</option>
+            </select>
+          </div>
+          <div class="form-group" id="rpt-term-group" style="display:none;">
+            <label>Term</label>
+            <select id="rpt-term">
+              <option value="">— All Terms —</option>
+              <option>Term 1</option><option>Term 2</option><option>Term 3</option>
+              <option>Preliminary</option><option>Annual</option>
+              <option>FA1</option><option>FA2</option><option>FA3</option><option>FA4</option>
+              <option>SA1</option><option>SA2</option>
+            </select>
+          </div>
+          <div class="form-group" id="rpt-test-group" style="display:none;">
+            <label>Test</label>
+            <select id="rpt-test">
+              <option value="">— All Tests —</option>
+              <option>Unit Test 1</option><option>Unit Test 2</option>
+              <option>Unit Test 3</option><option>Unit Test 4</option>
+              <option>Half Yearly</option><option>Annual</option><option>Preliminary</option>
+            </select>
+          </div>
+          <div class="form-group" id="rpt-date-group" style="display:none;">
+            <label>Date</label>
+            <input type="date" id="rpt-date">
+          </div>
+          <div class="form-group">
+            <label>Year</label>
+            <select id="rpt-year">
+              <option>2026-27</option><option>2025-26</option><option>2024-25</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:0 0 auto;">
+            <label>&nbsp;</label>
+            <button class="btn-save" onclick="loadReport()">🔍 Load</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report output -->
+      <div id="rpt-output"></div>
+    </div>
+
   </div>
 </div>
 
@@ -368,6 +443,14 @@ async function showApp() {
   document.getElementById('user-name-display').textContent = currentUser.name + ' (' + currentUser.role + ')';
   await loadAllClasses();
   populateSchoolDropdowns();
+  // Also populate reports school dropdown
+  const schools = [...new Set(allClasses.map(c => c.school))];
+  ['rpt-school'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select School —</option>';
+    schools.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  });
 }
 
 async function loadAllClasses() {
@@ -386,7 +469,7 @@ function populateSchoolDropdowns() {
 
 // ── Tabs ──────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['reportcard','diary','unittest'];
+  const tabs = ['reportcard','diary','unittest','reports'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   tabs.forEach(t => { document.getElementById('tab-'+t).style.display = t===name ? '' : 'none'; });
 }
@@ -752,6 +835,218 @@ async function saveUnitTests() {
     else showAlert('ut-alert', d.error || 'Save failed.', 'error');
   } catch(e) { showAlert('ut-alert','Network error.','error'); }
   btn.disabled = false; btn.textContent = '💾 Save All';
+}
+
+// ── Reports ───────────────────────────────────────────────────
+function onReportTypeChange() {
+  const type = document.getElementById('rpt-type').value;
+  document.getElementById('rpt-term-group').style.display = type === 'reportcard' ? '' : 'none';
+  document.getElementById('rpt-test-group').style.display = type === 'unittest' ? '' : 'none';
+  document.getElementById('rpt-date-group').style.display = type === 'diary' ? '' : 'none';
+  document.getElementById('rpt-output').innerHTML = '';
+}
+
+function loadRptClasses() {
+  const school = document.getElementById('rpt-school').value;
+  const classes = getClassesForSchool(school);
+  const sel = document.getElementById('rpt-class');
+  sel.innerHTML = '<option value="">— Select Class —</option>';
+  classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
+  document.getElementById('rpt-student').innerHTML = '<option value="">— All Students —</option>';
+}
+
+async function onRptClassChange() {
+  const school = document.getElementById('rpt-school').value;
+  const cls = document.getElementById('rpt-class').value;
+  const students = await fetchStudents(school, cls);
+  const sel = document.getElementById('rpt-student');
+  sel.innerHTML = '<option value="">— All Students —</option>';
+  students.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = (s.roll_no ? s.roll_no + '. ' : '') + s.name;
+    sel.appendChild(o);
+  });
+}
+
+async function loadReport() {
+  const type = document.getElementById('rpt-type').value;
+  const school = document.getElementById('rpt-school').value;
+  const cls = document.getElementById('rpt-class').value;
+  const studentId = document.getElementById('rpt-student').value;
+  const year = document.getElementById('rpt-year').value;
+  const term = document.getElementById('rpt-term').value;
+  const test = document.getElementById('rpt-test').value;
+  const date = document.getElementById('rpt-date').value;
+  const out = document.getElementById('rpt-output');
+
+  if (!type) { out.innerHTML = '<div class="alert alert-error">Please select a report type.</div>'; return; }
+  out.innerHTML = '<div class="alert alert-info">Loading...</div>';
+
+  try {
+    if (type === 'reportcard') await showReportCards(school, cls, studentId, term, year, out);
+    else if (type === 'unittest') await showUnitTestReport(school, cls, studentId, test, year, out);
+    else if (type === 'diary') await showDiaryReport(school, cls, studentId, date, year, out);
+  } catch(e) { out.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`; }
+}
+
+async function showReportCards(school, cls, studentId, term, year, out) {
+  let url = `/api/reportcards/list?academic_year=${year}`;
+  if (school) url += `&school=${encodeURIComponent(school)}`;
+  if (cls) url += `&class_name=${encodeURIComponent(cls)}`;
+  if (studentId) url += `&student_id=${studentId}`;
+  if (term) url += `&term=${encodeURIComponent(term)}`;
+
+  const r = await fetch(url);
+  if (!r.ok) { out.innerHTML = '<div class="alert alert-error">Failed to load report cards.</div>'; return; }
+  const cards = await r.json();
+  if (!cards.length) { out.innerHTML = '<div class="alert alert-info">No report cards found.</div>'; return; }
+
+  let html = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="margin:0;border:none;padding:0;">Report Cards (${cards.length})</h2>
+    <button class="btn-save" onclick="window.print()">🖨️ Print</button>
+  </div>`;
+
+  cards.forEach(card => {
+    html += `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px;page-break-inside:avoid;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div><strong style="font-size:16px;">${card.student_name}</strong>
+          <span style="color:#718096;font-size:13px;margin-left:8px;">Roll: ${card.roll_no} | ${card.class_name} | ${card.school}</span></div>
+        <div><span style="background:#1e3a5f;color:#fff;padding:4px 10px;border-radius:20px;font-size:13px;">${card.term} — ${card.academic_year}</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px;">
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Attendance</small><br><strong>${card.attendance_present}/${card.attendance_total} days</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Conduct</small><br><strong>${card.conduct||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Activity</small><br><strong>${card.activity||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Arts</small><br><strong>${card.arts||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Communication</small><br><strong>${card.communication||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Discipline</small><br><strong>${card.discipline||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Homework</small><br><strong>${card.homework||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Participation</small><br><strong>${card.participation||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Respect</small><br><strong>${card.respect||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Teamwork</small><br><strong>${card.teamwork||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Punctuality</small><br><strong>${card.punctuality||'—'}</strong></div>
+        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Improvement</small><br><strong>${card.improvement||'—'}</strong></div>
+      </div>`;
+    if (card.marks && card.marks.length) {
+      html += `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
+        <thead><tr style="background:#1e3a5f;color:#fff;">
+          <th style="padding:6px 10px;text-align:left;">Subject</th>
+          <th style="padding:6px 10px;text-align:center;">Obtained</th>
+          <th style="padding:6px 10px;text-align:center;">Total</th>
+          <th style="padding:6px 10px;text-align:center;">%</th>
+        </tr></thead><tbody>`;
+      card.marks.forEach((m, i) => {
+        const pct = m.marks_total ? Math.round((m.marks_obtained/m.marks_total)*100) : '—';
+        html += `<tr style="background:${i%2===0?'#fff':'#f7fafc'}">
+          <td style="padding:6px 10px;">${m.subject}</td>
+          <td style="padding:6px 10px;text-align:center;">${m.marks_obtained??'—'}</td>
+          <td style="padding:6px 10px;text-align:center;">${m.marks_total??'—'}</td>
+          <td style="padding:6px 10px;text-align:center;">${pct}${pct!=='—'?'%':''}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+    }
+    if (card.remarks) html += `<div style="background:#fffbeb;padding:8px 12px;border-radius:6px;font-size:13px;"><strong>Remarks:</strong> ${card.remarks}</div>`;
+    html += '</div>';
+  });
+  html += '</div>';
+  out.innerHTML = html;
+}
+
+async function showUnitTestReport(school, cls, studentId, test, year, out) {
+  let url = `/api/unittests?academic_year=${year}`;
+  if (school) url += `&school=${encodeURIComponent(school)}`;
+  if (cls) url += `&class_name=${encodeURIComponent(cls)}`;
+  if (test) url += `&test_name=${encodeURIComponent(test)}`;
+
+  const r = await fetch(url);
+  if (!r.ok) { out.innerHTML = '<div class="alert alert-error">Failed to load unit test marks.</div>'; return; }
+  let rows = await r.json();
+  if (studentId) rows = rows.filter(r => String(r.student_id) === String(studentId));
+  if (!rows.length) { out.innerHTML = '<div class="alert alert-info">No unit test marks found.</div>'; return; }
+
+  // Group by student
+  const byStudent = {};
+  rows.forEach(r => {
+    const key = String(r.student_id);
+    if (!byStudent[key]) byStudent[key] = { name: r.student_name, roll_no: r.roll_no, school: r.school, class_name: r.class_name, subjects: [] };
+    byStudent[key].subjects.push(r);
+  });
+
+  let html = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="margin:0;border:none;padding:0;">Unit Test Marks — ${test||'All Tests'} (${year})</h2>
+    <button class="btn-save" onclick="window.print()">🖨️ Print</button>
+  </div><div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#1e3a5f;color:#fff;">
+      <th style="padding:8px 10px;">Roll</th>
+      <th style="padding:8px 10px;">Student</th>
+      <th style="padding:8px 10px;">Subject</th>
+      <th style="padding:8px 10px;text-align:center;">Obtained</th>
+      <th style="padding:8px 10px;text-align:center;">Total</th>
+    </tr></thead><tbody>`;
+
+  let i = 0;
+  Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||0)-(parseInt(b.roll_no)||0)).forEach(st => {
+    st.subjects.forEach((subj, si) => {
+      html += `<tr style="background:${i%2===0?'#fff':'#f7fafc'}">
+        ${si===0 ? `<td style="padding:6px 10px;font-weight:700;" rowspan="${st.subjects.length}">${st.roll_no}</td>
+          <td style="padding:6px 10px;font-weight:600;" rowspan="${st.subjects.length}">${st.name}<br><small style="color:#718096;">${st.class_name} | ${st.school}</small></td>` : ''}
+        <td style="padding:6px 10px;">${subj.subject}</td>
+        <td style="padding:6px 10px;text-align:center;font-weight:600;">${subj.obtained_marks||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;">${subj.total_marks||'—'}</td>
+      </tr>`;
+      i++;
+    });
+  });
+  html += '</tbody></table></div></div>';
+  out.innerHTML = html;
+}
+
+async function showDiaryReport(school, cls, studentId, date, year, out) {
+  let url = '/api/diary?';
+  if (studentId) url += `student_id=${studentId}&`;
+  else if (school) url += `school=${encodeURIComponent(school)}&`;
+  if (cls && !studentId) url += `class_name=${encodeURIComponent(cls)}&`;
+  if (date) url += `date=${date}&`;
+  else url += `from=2024-06-01&`;
+
+  const r = await fetch(url);
+  if (!r.ok) { out.innerHTML = '<div class="alert alert-error">Failed to load diary entries.</div>'; return; }
+  const entries = await r.json();
+  if (!entries.length) { out.innerHTML = '<div class="alert alert-info">No diary entries found.</div>'; return; }
+
+  let html = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="margin:0;border:none;padding:0;">Daily Diary (${entries.length} entries)</h2>
+    <button class="btn-save" onclick="window.print()">🖨️ Print</button>
+  </div><div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#1e3a5f;color:#fff;">
+      <th style="padding:8px 10px;">Date</th>
+      <th style="padding:8px 10px;">Student</th>
+      <th style="padding:8px 10px;">Class</th>
+      <th style="padding:8px 10px;">Activity</th>
+      <th style="padding:8px 10px;">Behaviour</th>
+      <th style="padding:8px 10px;">Homework</th>
+      <th style="padding:8px 10px;">Classwork</th>
+      <th style="padding:8px 10px;">Remarks</th>
+    </tr></thead><tbody>`;
+
+  entries.forEach((e, i) => {
+    html += `<tr style="background:${i%2===0?'#fff':'#f7fafc'}">
+      <td style="padding:6px 10px;white-space:nowrap;">${e.entry_date}</td>
+      <td style="padding:6px 10px;font-weight:600;">${e.student_name||'—'}</td>
+      <td style="padding:6px 10px;">${e.class_name||''} ${e.school||''}</td>
+      <td style="padding:6px 10px;">${e.activity||'—'}</td>
+      <td style="padding:6px 10px;">${e.behaviour||'—'}</td>
+      <td style="padding:6px 10px;">${e.homework||'—'}</td>
+      <td style="padding:6px 10px;">${e.classwork||'—'}</td>
+      <td style="padding:6px 10px;">${e.remarks||'—'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div></div>';
+  out.innerHTML = html;
 }
 
 // ── Helpers ───────────────────────────────────────────────────
