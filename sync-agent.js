@@ -193,6 +193,59 @@ async function pullDiaryEntries() {
   return synced;
 }
 
+// ── Pull cloud unit test marks → local ───────────────────────────────────────
+async function pullUnitTests() {
+  const { data: entries, error } = await supabase
+    .from('cloud_unit_test_marks')
+    .select('*')
+    .is('synced_at', null);
+
+  if (error) { console.error('[SYNC] Fetch unit tests error:', error.message); return 0; }
+  if (!entries || entries.length === 0) return 0;
+
+  let synced = 0;
+  for (const en of entries) {
+    try {
+      const existing = queryOne(
+        'SELECT id FROM unit_test_marks WHERE student_id=? AND academic_year=? AND test_name=? AND subject=?',
+        [en.student_id, en.academic_year, en.test_name, en.subject]
+      );
+
+      let localId;
+      if (existing) {
+        run(`UPDATE unit_test_marks SET total_marks=?,obtained_marks=?,
+          part1_marks=?,part2_marks=?,part3_marks=?,part4_marks=?,part5_marks=?,created_by=? WHERE id=?`,
+          [en.total_marks||'', en.obtained_marks||'',
+           en.part1_marks||'', en.part2_marks||'', en.part3_marks||'', en.part4_marks||'', en.part5_marks||'',
+           en.recorded_by, existing.id]);
+        localId = existing.id;
+      } else {
+        const info = run(
+          `INSERT INTO unit_test_marks
+           (student_id,academic_year,test_name,subject,total_marks,obtained_marks,
+            part1_marks,part2_marks,part3_marks,part4_marks,part5_marks,created_by)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [en.student_id, en.academic_year, en.test_name, en.subject,
+           en.total_marks||'', en.obtained_marks||'',
+           en.part1_marks||'', en.part2_marks||'', en.part3_marks||'', en.part4_marks||'', en.part5_marks||'',
+           en.recorded_by]
+        );
+        localId = info.lastInsertRowid;
+      }
+
+      await supabase
+        .from('cloud_unit_test_marks')
+        .update({ synced_at: new Date().toISOString(), local_id: localId })
+        .eq('id', en.id);
+
+      synced++;
+    } catch(e) {
+      console.error(`[SYNC] Error syncing unit test id=${en.id}:`, e.message);
+    }
+  }
+  return synced;
+}
+
 // ── Main sync cycle ───────────────────────────────────────────────────────────
 async function syncCycle() {
   const now = new Date().toLocaleTimeString('en-IN');
@@ -201,13 +254,14 @@ async function syncCycle() {
   try {
     const rcCount = await pullReportCards();
     const diaryCount = await pullDiaryEntries();
+    const utCount = await pullUnitTests();
 
-    if (rcCount > 0 || diaryCount > 0) {
-      console.log(`[SYNC] ✅ Synced: ${rcCount} report card(s), ${diaryCount} diary entry/entries.`);
-      // Log to Supabase
+    if (rcCount > 0 || diaryCount > 0 || utCount > 0) {
+      console.log(`[SYNC] ✅ Synced: ${rcCount} report card(s), ${diaryCount} diary entry/entries, ${utCount} unit test mark(s).`);
       await supabase.from('sync_log').insert({
         report_cards_synced: rcCount,
-        diary_entries_synced: diaryCount
+        diary_entries_synced: diaryCount,
+        notes: `unit_tests: ${utCount}`
       });
     } else {
       console.log(`[SYNC] ✓ No new data to sync.`);

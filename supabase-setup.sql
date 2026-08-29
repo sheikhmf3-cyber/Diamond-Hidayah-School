@@ -105,3 +105,27 @@ CREATE TABLE IF NOT EXISTS sync_log (
 -- ============================================================
 -- Done! Now go back to Claude and share your URL + anon key.
 -- ============================================================
+
+-- ============================================================
+-- Unit Test Marks (cloud)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cloud_unit_test_marks (
+  id SERIAL PRIMARY KEY,
+  local_id INTEGER DEFAULT NULL,
+  student_id INTEGER NOT NULL,
+  academic_year TEXT NOT NULL DEFAULT '2026-27',
+  test_name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  total_marks TEXT DEFAULT '',
+  obtained_marks TEXT DEFAULT '',
+  part1_marks TEXT DEFAULT '',
+  part2_marks TEXT DEFAULT '',
+  part3_marks TEXT DEFAULT '',
+  part4_marks TEXT DEFAULT '',
+  part5_marks TEXT DEFAULT '',
+  recorded_by INTEGER,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  synced_at TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE(student_id, academic_year, test_name, subject)
+);

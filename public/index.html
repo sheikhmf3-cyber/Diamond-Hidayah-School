@@ -8,7 +8,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
 
-  /* Login */
   #login-page { display:flex; align-items:center; justify-content:center; min-height:100vh; background: linear-gradient(135deg,#1e3a5f,#2d6a9f); }
   .login-box { background:#fff; border-radius:12px; padding:40px 36px; width:100%; max-width:380px; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
   .login-box h1 { font-size:22px; color:#1e3a5f; margin-bottom:4px; }
@@ -20,7 +19,6 @@
   .btn-primary:hover { background:#2d6a9f; }
   .error-msg { color:#e53e3e; font-size:13px; margin-top:10px; text-align:center; }
 
-  /* App */
   #app-page { display:none; }
   .topbar { background:#1e3a5f; color:#fff; padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:56px; }
   .topbar h1 { font-size:17px; font-weight:600; }
@@ -28,20 +26,18 @@
   .btn-logout { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
   .btn-logout:hover { background:rgba(255,255,255,0.25); }
 
-  .tabs { background:#fff; border-bottom:2px solid #e2e8f0; display:flex; padding:0 24px; }
-  .tab { padding:14px 20px; font-size:14px; font-weight:600; color:#718096; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; }
+  .tabs { background:#fff; border-bottom:2px solid #e2e8f0; display:flex; padding:0 24px; overflow-x:auto; }
+  .tab { padding:14px 20px; font-size:14px; font-weight:600; color:#718096; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; }
   .tab.active { color:#1e3a5f; border-bottom-color:#1e3a5f; }
   .tab:hover { color:#2d6a9f; }
 
-  .content { padding:24px; max-width:960px; margin:0 auto; }
+  .content { padding:24px; max-width:1100px; margin:0 auto; }
 
-  /* Cards */
   .card { background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:20px; }
   .card h2 { font-size:16px; font-weight:600; color:#1e3a5f; margin-bottom:18px; border-bottom:1px solid #e2e8f0; padding-bottom:12px; }
 
-  /* Forms */
   .form-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
-  .form-group { flex:1; min-width:180px; }
+  .form-group { flex:1; min-width:160px; }
   .form-group label { display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px; }
   .form-group input, .form-group select, .form-group textarea {
     width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px; color:#1a202c;
@@ -51,10 +47,6 @@
   }
   .form-group textarea { resize:vertical; min-height:60px; }
 
-  /* Section headings inside forms */
-  .section-title { font-size:13px; font-weight:700; color:#4a5568; text-transform:uppercase; letter-spacing:0.5px; margin:20px 0 12px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0; }
-
-  /* Subjects table */
   .subjects-table { width:100%; border-collapse:collapse; font-size:14px; margin-bottom:14px; }
   .subjects-table th { background:#f7fafc; text-align:left; padding:8px 10px; font-size:12px; color:#718096; font-weight:600; border-bottom:2px solid #e2e8f0; }
   .subjects-table td { padding:6px 10px; border-bottom:1px solid #f0f4f8; }
@@ -64,19 +56,14 @@
   .btn-add-subject:hover { background:#e2e8f0; }
   .btn-remove { background:none; border:none; color:#e53e3e; cursor:pointer; font-size:16px; padding:2px 6px; }
 
-  /* Buttons */
   .btn-save { background:#1e3a5f; color:#fff; border:none; padding:10px 28px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
   .btn-save:hover { background:#2d6a9f; }
   .btn-save:disabled { background:#a0aec0; cursor:not-allowed; }
-  .btn-secondary { background:#edf2f7; color:#4a5568; border:none; padding:9px 20px; border-radius:8px; font-size:14px; cursor:pointer; }
 
-  /* Alerts */
   .alert { padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:14px; }
   .alert-success { background:#f0fff4; color:#276749; border:1px solid #c6f6d5; }
   .alert-error { background:#fff5f5; color:#9b2c2c; border:1px solid #fed7d7; }
-  .alert-info { background:#ebf8ff; color:#2c5282; border:1px solid #bee3f8; }
 
-  /* Bulk diary table */
   .bulk-table { width:100%; border-collapse:collapse; font-size:13px; }
   .bulk-table th { background:#1e3a5f; color:#fff; padding:9px 10px; text-align:left; font-size:12px; }
   .bulk-table td { padding:5px 6px; border-bottom:1px solid #e2e8f0; }
@@ -84,11 +71,10 @@
   .bulk-table input { width:100%; padding:5px 7px; border:1px solid #e2e8f0; border-radius:4px; font-size:12px; }
   .bulk-table input:focus { outline:none; border-color:#2d6a9f; }
 
-  /* Loading spinner */
-  .spinner { display:inline-block; width:18px; height:18px; border:2px solid #e2e8f0; border-top-color:#2d6a9f; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:8px; }
-  @keyframes spin { to { transform:rotate(360deg); } }
+  /* Unit test specific */
+  .ut-student-row td { vertical-align:middle; }
+  .ut-marks-input { width:60px !important; text-align:center; }
 
-  /* Responsive */
   @media(max-width:600px) {
     .form-row { flex-direction:column; }
     .content { padding:16px; }
@@ -98,11 +84,11 @@
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN -->
 <div id="login-page">
   <div class="login-box">
-    <h1>🏫 Diamond School</h1>
-    <p>Online Teacher Portal — Report Cards & Daily Diary</p>
+    <h1>🏫 Diamond / Hidayah School</h1>
+    <p>Online Teacher Portal</p>
     <label>Username</label>
     <input type="text" id="login-username" placeholder="Enter username" autocomplete="username">
     <label>Password</label>
@@ -112,10 +98,10 @@
   </div>
 </div>
 
-<!-- APP PAGE -->
+<!-- APP -->
 <div id="app-page">
   <div class="topbar">
-    <h1>🏫 Diamond School — Online Portal</h1>
+    <h1>🏫 Diamond / Hidayah School — Online Portal</h1>
     <div class="topbar-right">
       <span id="user-name-display"></span>
       <button class="btn-logout" onclick="doLogout()">Logout</button>
@@ -125,11 +111,12 @@
   <div class="tabs">
     <div class="tab active" onclick="switchTab('reportcard')">📋 Report Cards</div>
     <div class="tab" onclick="switchTab('diary')">📖 Daily Diary</div>
+    <div class="tab" onclick="switchTab('unittest')">✏️ Unit Tests</div>
   </div>
 
   <div class="content">
 
-    <!-- REPORT CARD TAB -->
+    <!-- ═══════════════════════════════ REPORT CARD TAB ═══════════════════════════════ -->
     <div id="tab-reportcard">
       <div class="card">
         <h2>Select Student & Term</h2>
@@ -156,11 +143,8 @@
             <label>Term</label>
             <select id="rc-term" onchange="loadReportCard()">
               <option value="">— Select Term —</option>
-              <option>Term 1</option>
-              <option>Term 2</option>
-              <option>Term 3</option>
-              <option>Preliminary</option>
-              <option>Annual</option>
+              <option>Term 1</option><option>Term 2</option><option>Term 3</option>
+              <option>Preliminary</option><option>Annual</option>
               <option>FA1</option><option>FA2</option><option>FA3</option><option>FA4</option>
               <option>SA1</option><option>SA2</option>
             </select>
@@ -168,6 +152,7 @@
           <div class="form-group">
             <label>Academic Year</label>
             <select id="rc-year">
+              <option>2026-27</option>
               <option>2025-26</option>
               <option>2024-25</option>
             </select>
@@ -179,29 +164,17 @@
         <div class="card">
           <h2>Attendance & Remarks</h2>
           <div class="form-row">
-            <div class="form-group">
-              <label>Days Present</label>
-              <input type="number" id="rc-present" min="0" placeholder="0">
-            </div>
-            <div class="form-group">
-              <label>Total Working Days</label>
-              <input type="number" id="rc-total" min="0" placeholder="0">
-            </div>
-            <div class="form-group">
-              <label>Conduct</label>
-              <input type="text" id="rc-conduct" placeholder="e.g. Good, Excellent">
-            </div>
+            <div class="form-group"><label>Days Present</label><input type="number" id="rc-present" min="0" placeholder="0"></div>
+            <div class="form-group"><label>Total Working Days</label><input type="number" id="rc-total" min="0" placeholder="0"></div>
+            <div class="form-group"><label>Conduct</label><input type="text" id="rc-conduct" placeholder="e.g. Good, Excellent"></div>
           </div>
           <div class="form-row">
-            <div class="form-group">
-              <label>Teacher's Remarks</label>
-              <textarea id="rc-remarks" placeholder="Enter remarks..."></textarea>
-            </div>
+            <div class="form-group"><label>Teacher's Remarks</label><textarea id="rc-remarks" placeholder="Enter remarks..."></textarea></div>
           </div>
         </div>
 
         <div class="card">
-          <h2>Co-Scholastic Assessment (Grades)</h2>
+          <h2>Co-Scholastic Assessment (Grades A/B/C/D)</h2>
           <div class="form-row">
             <div class="form-group"><label>Activity</label><input type="text" id="rc-activity" placeholder="A/B/C/D"></div>
             <div class="form-group"><label>Arts & Craft</label><input type="text" id="rc-arts" placeholder="A/B/C/D"></div>
@@ -224,14 +197,7 @@
         <div class="card">
           <h2>Subject Marks</h2>
           <table class="subjects-table">
-            <thead>
-              <tr>
-                <th>Subject</th>
-                <th>Marks Obtained</th>
-                <th>Total Marks</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Subject</th><th>Marks Obtained</th><th>Total Marks</th><th></th></tr></thead>
             <tbody id="subjects-tbody"></tbody>
           </table>
           <button class="btn-add-subject" onclick="addSubjectRow()">+ Add Subject</button>
@@ -242,7 +208,7 @@
       </div>
     </div>
 
-    <!-- DAILY DIARY TAB -->
+    <!-- ═══════════════════════════════ DIARY TAB ═══════════════════════════════ -->
     <div id="tab-diary" style="display:none;">
       <div class="card">
         <h2>Select Class & Date</h2>
@@ -264,30 +230,95 @@
             <input type="date" id="d-date" onchange="loadDiaryStudents()">
           </div>
         </div>
+        <div id="diary-load-status" style="font-size:13px;color:#718096;"></div>
       </div>
 
       <div id="diary-bulk-area" style="display:none;">
         <div class="card">
-          <h2>Diary Entry — Bulk (whole class)</h2>
+          <h2>Daily Diary — Bulk Entry (Whole Class)</h2>
           <div id="diary-alert"></div>
           <div style="overflow-x:auto;">
             <table class="bulk-table" id="diary-bulk-table">
               <thead>
                 <tr>
-                  <th>Roll</th>
-                  <th>Student Name</th>
-                  <th>Activity</th>
-                  <th>Behaviour</th>
-                  <th>Homework</th>
-                  <th>Classwork</th>
-                  <th>Remarks</th>
+                  <th style="width:50px">Roll</th>
+                  <th style="min-width:140px">Student Name</th>
+                  <th style="min-width:120px">Activity</th>
+                  <th style="min-width:120px">Behaviour</th>
+                  <th style="min-width:150px">Homework</th>
+                  <th style="min-width:150px">Classwork</th>
+                  <th style="min-width:120px">Remarks</th>
                 </tr>
               </thead>
               <tbody id="diary-bulk-tbody"></tbody>
             </table>
           </div>
           <br>
-          <button class="btn-save" onclick="saveBulkDiary()">💾 Save All Entries</button>
+          <button class="btn-save" id="diary-save-btn" onclick="saveBulkDiary()">💾 Save All Entries</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ UNIT TEST TAB ═══════════════════════════════ -->
+    <div id="tab-unittest" style="display:none;">
+      <div class="card">
+        <h2>Select Class & Test</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>School</label>
+            <select id="ut-school" onchange="loadUtClasses()">
+              <option value="">— Select School —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Class</label>
+            <select id="ut-class" onchange="loadUtSubjects()">
+              <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Test Name</label>
+            <select id="ut-test" onchange="loadUtStudents()">
+              <option value="">— Select Test —</option>
+              <option>Unit Test 1</option>
+              <option>Unit Test 2</option>
+              <option>Unit Test 3</option>
+              <option>Unit Test 4</option>
+              <option>Half Yearly</option>
+              <option>Annual</option>
+              <option>Preliminary</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select id="ut-subject" onchange="loadUtStudents()">
+              <option value="">— Select Subject —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Academic Year</label>
+            <select id="ut-year">
+              <option>2026-27</option>
+              <option>2025-26</option>
+              <option>2024-25</option>
+            </select>
+          </div>
+        </div>
+        <div id="ut-load-status" style="font-size:13px;color:#718096;"></div>
+      </div>
+
+      <div id="ut-bulk-area" style="display:none;">
+        <div class="card">
+          <h2 id="ut-bulk-title">Unit Test Marks Entry</h2>
+          <div id="ut-alert"></div>
+          <div style="overflow-x:auto;">
+            <table class="bulk-table">
+              <thead></thead>
+              <tbody id="ut-bulk-tbody"></tbody>
+            </table>
+          </div>
+          <br>
+          <button class="btn-save" id="ut-save-btn" onclick="saveUnitTests()">💾 Save All Marks</button>
         </div>
       </div>
     </div>
@@ -299,17 +330,14 @@
 let currentUser = null;
 let allClasses = [];
 
-// ── Auth ───────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
   document.getElementById('login-error').textContent = '';
   if (!username || !password) { document.getElementById('login-error').textContent = 'Enter username and password.'; return; }
   try {
-    const r = await fetch('/api/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ username, password })
-    });
+    const r = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username, password }) });
     const d = await r.json();
     if (!r.ok) { document.getElementById('login-error').textContent = d.error || 'Login failed.'; return; }
     currentUser = d.user;
@@ -324,7 +352,6 @@ async function doLogout() {
   document.getElementById('login-page').style.display = 'flex';
 }
 
-// ── App init ──────────────────────────────────────────────────
 async function checkSession() {
   try {
     const r = await fetch('/api/auth/me');
@@ -348,7 +375,7 @@ async function loadAllClasses() {
 
 function populateSchoolDropdowns() {
   const schools = [...new Set(allClasses.map(c => c.school))];
-  ['rc-school','d-school'].forEach(id => {
+  ['rc-school','d-school','ut-school'].forEach(id => {
     const sel = document.getElementById(id);
     sel.innerHTML = '<option value="">— Select School —</option>';
     schools.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
@@ -357,15 +384,26 @@ function populateSchoolDropdowns() {
 
 // ── Tabs ──────────────────────────────────────────────────────
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === (name==='reportcard'?0:1)));
-  document.getElementById('tab-reportcard').style.display = name==='reportcard' ? '' : 'none';
-  document.getElementById('tab-diary').style.display = name==='diary' ? '' : 'none';
+  const tabs = ['reportcard','diary','unittest'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
+  tabs.forEach(t => { document.getElementById('tab-'+t).style.display = t===name ? '' : 'none'; });
+}
+
+// ── Class/Student loaders (shared helper) ─────────────────────
+function getClassesForSchool(school) {
+  return [...new Set(allClasses.filter(c => c.school===school).map(c => c.class_name))];
+}
+
+async function fetchStudents(school, cls) {
+  if (!school || !cls) return [];
+  const r = await fetch(`/api/students?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}`);
+  return r.ok ? await r.json() : [];
 }
 
 // ── Report Card ───────────────────────────────────────────────
 function loadRcClasses() {
   const school = document.getElementById('rc-school').value;
-  const classes = [...new Set(allClasses.filter(c => c.school===school).map(c => c.class_name))];
+  const classes = getClassesForSchool(school);
   const sel = document.getElementById('rc-class');
   sel.innerHTML = '<option value="">— Select Class —</option>';
   classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
@@ -376,9 +414,7 @@ function loadRcClasses() {
 async function loadRcStudents() {
   const school = document.getElementById('rc-school').value;
   const cls = document.getElementById('rc-class').value;
-  if (!school || !cls) return;
-  const r = await fetch(`/api/students?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}`);
-  const students = r.ok ? await r.json() : [];
+  const students = await fetchStudents(school, cls);
   const sel = document.getElementById('rc-student');
   sel.innerHTML = '<option value="">— Select Student —</option>';
   students.forEach(s => {
@@ -395,24 +431,18 @@ async function loadReportCard() {
   const term = document.getElementById('rc-term').value;
   const year = document.getElementById('rc-year').value;
   if (!studentId || !term) return;
-
   document.getElementById('rc-form-area').style.display = 'block';
   clearRcForm();
-
   const r = await fetch(`/api/reportcards?student_id=${studentId}&term=${encodeURIComponent(term)}&academic_year=${year}`);
   if (!r.ok) return;
   const { card, marks } = await r.json();
   if (!card) return;
-
-  const fields = ['present','total','conduct','remarks','activity','arts','communication',
-    'discipline','homework','participation','respect','teamwork','punctuality','improvement','daily_activity'];
-  const map = { present:'attendance_present', total:'attendance_total' };
-  fields.forEach(f => {
-    const el = document.getElementById('rc-'+f);
-    if (el) el.value = card[map[f]||f] || '';
+  ['conduct','remarks','activity','arts','communication','discipline','homework',
+   'participation','respect','teamwork','punctuality','improvement','daily_activity'].forEach(f => {
+    const el = document.getElementById('rc-'+f); if(el) el.value = card[f]||'';
   });
-
-  // Load marks
+  document.getElementById('rc-present').value = card.attendance_present||'';
+  document.getElementById('rc-total').value = card.attendance_total||'';
   const tbody = document.getElementById('subjects-tbody');
   tbody.innerHTML = '';
   (marks||[]).forEach(m => addSubjectRow(m.subject, m.marks_obtained, m.marks_total));
@@ -443,15 +473,11 @@ async function saveReportCard() {
   const term = document.getElementById('rc-term').value;
   const year = document.getElementById('rc-year').value;
   if (!studentId || !term) { showAlert('rc-alert','Please select student and term.','error'); return; }
-
   const subjects = [];
   document.querySelectorAll('#subjects-tbody tr').forEach(tr => {
     const inputs = tr.querySelectorAll('input');
-    if (inputs[0].value.trim()) {
-      subjects.push({ subject: inputs[0].value.trim(), marks_obtained: inputs[1].value||null, marks_total: inputs[2].value||null });
-    }
+    if (inputs[0].value.trim()) subjects.push({ subject: inputs[0].value.trim(), marks_obtained: inputs[1].value||null, marks_total: inputs[2].value||null });
   });
-
   const body = {
     student_id: studentId, term, academic_year: year,
     attendance_present: document.getElementById('rc-present').value,
@@ -471,13 +497,12 @@ async function saveReportCard() {
     daily_activity: document.getElementById('rc-daily_activity').value,
     subjects
   };
-
   const btn = document.querySelector('#tab-reportcard .btn-save');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
     const r = await fetch('/api/reportcards', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     const d = await r.json();
-    if (r.ok) showAlert('rc-alert','Report card saved successfully! Will sync to local system within 2 minutes.','success');
+    if (r.ok) showAlert('rc-alert','✅ Report card saved! Will sync to local system within 2 minutes.','success');
     else showAlert('rc-alert', d.error || 'Save failed.','error');
   } catch(e) { showAlert('rc-alert','Network error.','error'); }
   btn.disabled = false; btn.textContent = '💾 Save Report Card';
@@ -486,7 +511,7 @@ async function saveReportCard() {
 // ── Daily Diary ───────────────────────────────────────────────
 function loadDiaryClasses() {
   const school = document.getElementById('d-school').value;
-  const classes = [...new Set(allClasses.filter(c => c.school===school).map(c => c.class_name))];
+  const classes = getClassesForSchool(school);
   const sel = document.getElementById('d-class');
   sel.innerHTML = '<option value="">— Select Class —</option>';
   classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
@@ -499,8 +524,14 @@ async function loadDiaryStudents() {
   const date = document.getElementById('d-date').value;
   if (!school || !cls || !date) return;
 
-  const r = await fetch(`/api/students?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}`);
-  const students = r.ok ? await r.json() : [];
+  document.getElementById('diary-load-status').textContent = 'Loading students...';
+  const students = await fetchStudents(school, cls);
+
+  if (!students.length) {
+    document.getElementById('diary-load-status').textContent = 'No students found for this class.';
+    document.getElementById('diary-bulk-area').style.display = 'none';
+    return;
+  }
 
   // Load existing diary entries for this class+date
   const dr = await fetch(`/api/diary?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}&date=${date}`);
@@ -515,7 +546,7 @@ async function loadDiaryStudents() {
     const tr = document.createElement('tr');
     tr.dataset.studentId = s.id;
     tr.innerHTML = `
-      <td>${s.roll_no||''}</td>
+      <td style="font-weight:600">${s.roll_no||''}</td>
       <td><strong>${s.name}</strong></td>
       <td><input type="text" value="${ex.activity||''}" placeholder="Activity"></td>
       <td><input type="text" value="${ex.behaviour||''}" placeholder="Behaviour"></td>
@@ -526,56 +557,185 @@ async function loadDiaryStudents() {
     tbody.appendChild(tr);
   });
 
-  document.getElementById('diary-bulk-area').style.display = students.length ? '' : 'none';
+  document.getElementById('diary-load-status').textContent = `${students.length} students loaded.`;
+  document.getElementById('diary-bulk-area').style.display = '';
   document.getElementById('diary-alert').innerHTML = '';
 }
 
 async function saveBulkDiary() {
   const date = document.getElementById('d-date').value;
   if (!date) { showAlert('diary-alert','Please select a date.','error'); return; }
-
   const entries = [];
   document.querySelectorAll('#diary-bulk-tbody tr').forEach(tr => {
     const inputs = tr.querySelectorAll('input');
-    entries.push({
-      student_id: tr.dataset.studentId,
-      entry_date: date,
-      activity: inputs[0].value,
-      behaviour: inputs[1].value,
-      homework: inputs[2].value,
-      classwork: inputs[3].value,
-      remarks: inputs[4].value
-    });
+    entries.push({ student_id: tr.dataset.studentId, entry_date: date,
+      activity: inputs[0].value, behaviour: inputs[1].value,
+      homework: inputs[2].value, classwork: inputs[3].value, remarks: inputs[4].value });
   });
-
-  const btn = document.querySelector('#tab-diary .btn-save');
+  const btn = document.getElementById('diary-save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
     const r = await fetch('/api/diary/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries }) });
     const d = await r.json();
-    if (r.ok) showAlert('diary-alert', `Saved ${d.saved} entries. Will sync to local system within 2 minutes.`, 'success');
+    if (r.ok) showAlert('diary-alert', `✅ Saved ${d.saved} entries. Will sync to local system within 2 minutes.`, 'success');
     else showAlert('diary-alert', d.error || 'Save failed.', 'error');
   } catch(e) { showAlert('diary-alert','Network error.','error'); }
   btn.disabled = false; btn.textContent = '💾 Save All Entries';
+}
+
+// ── Unit Tests ────────────────────────────────────────────────
+let utSubjectConfig = []; // parts config for current class+subject
+
+function loadUtClasses() {
+  const school = document.getElementById('ut-school').value;
+  const classes = getClassesForSchool(school);
+  const sel = document.getElementById('ut-class');
+  sel.innerHTML = '<option value="">— Select Class —</option>';
+  classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
+  document.getElementById('ut-subject').innerHTML = '<option value="">— Select Subject —</option>';
+  document.getElementById('ut-bulk-area').style.display = 'none';
+}
+
+async function loadUtSubjects() {
+  const cls = document.getElementById('ut-class').value;
+  if (!cls) return;
+  // Load subject list for this class from server
+  const r = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
+  const data = r.ok ? await r.json() : { subjects: [] };
+  const sel = document.getElementById('ut-subject');
+  sel.innerHTML = '<option value="">— Select Subject —</option>';
+  (data.subjects || []).forEach(s => {
+    const total = s.parts.reduce((a,p) => a+p.max, 0);
+    const o = document.createElement('option');
+    o.value = s.name;
+    o.textContent = `${s.name} (Total: ${total})`;
+    sel.appendChild(o);
+  });
+  document.getElementById('ut-bulk-area').style.display = 'none';
+}
+
+async function loadUtStudents() {
+  const school = document.getElementById('ut-school').value;
+  const cls = document.getElementById('ut-class').value;
+  const test = document.getElementById('ut-test').value;
+  const subject = document.getElementById('ut-subject').value;
+  const year = document.getElementById('ut-year').value;
+  if (!school || !cls || !test || !subject) return;
+
+  document.getElementById('ut-load-status').textContent = 'Loading students...';
+
+  // Get subject parts config
+  const cr = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
+  const cdata = cr.ok ? await cr.json() : { subjects: [] };
+  const subjDef = (cdata.subjects || []).find(s => s.name === subject);
+  utSubjectConfig = subjDef ? subjDef.parts : [];
+
+  const students = await fetchStudents(school, cls);
+  if (!students.length) {
+    document.getElementById('ut-load-status').textContent = 'No students found.';
+    document.getElementById('ut-bulk-area').style.display = 'none';
+    return;
+  }
+
+  // Fetch existing marks
+  const mr = await fetch(`/api/unittests?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}&test_name=${encodeURIComponent(test)}&academic_year=${year}`);
+  const existing = mr.ok ? await mr.json() : [];
+  const existingMap = {};
+  existing.filter(e => e.subject === subject).forEach(e => { existingMap[e.student_id] = e; });
+
+  // Build table header dynamically based on parts
+  const totalMarks = utSubjectConfig.reduce((a,p) => a+p.max, 0);
+  document.getElementById('ut-bulk-title').textContent = `${test} — ${subject} (Total: ${totalMarks})`;
+
+  // Build thead
+  const table = document.querySelector('#ut-bulk-area table');
+  let theadHtml = '<tr><th style="width:50px">Roll</th><th style="min-width:160px">Student</th>';
+  utSubjectConfig.forEach(p => { theadHtml += `<th style="min-width:90px">${p.label}<br><small>/${p.max}</small></th>`; });
+  theadHtml += '<th style="min-width:80px">Total</th></tr>';
+  table.querySelector('thead').innerHTML = theadHtml;
+
+  const tbody = document.getElementById('ut-bulk-tbody');
+  tbody.innerHTML = '';
+  students.forEach(s => {
+    const ex = existingMap[s.id] || {};
+    const tr = document.createElement('tr');
+    tr.dataset.studentId = s.id;
+    let tds = `<td style="font-weight:600">${s.roll_no||''}</td><td><strong>${s.name}</strong></td>`;
+    utSubjectConfig.forEach((p, i) => {
+      const val = ex[`part${i+1}_marks`] || '';
+      tds += `<td><input type="number" class="ut-marks-input" data-part="${p.key}" data-max="${p.max}" value="${val}" placeholder="0" min="0" max="${p.max}" oninput="updateUtTotal(this)"></td>`;
+    });
+    // Total display
+    const obtained = ex.obtained_marks || '';
+    tds += `<td><strong class="ut-row-total">${obtained}</strong></td>`;
+    tr.innerHTML = tds;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('ut-load-status').textContent = `${students.length} students loaded.`;
+  document.getElementById('ut-bulk-area').style.display = '';
+  document.getElementById('ut-alert').innerHTML = '';
+}
+
+function updateUtTotal(input) {
+  // Clamp to max
+  if (input.value !== '' && parseFloat(input.value) > parseFloat(input.dataset.max)) {
+    input.value = input.dataset.max;
+  }
+  // Recompute row total
+  const tr = input.closest('tr');
+  const inputs = tr.querySelectorAll('.ut-marks-input');
+  let total = 0;
+  inputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
+  tr.querySelector('.ut-row-total').textContent = total;
+}
+
+async function saveUnitTests() {
+  const test = document.getElementById('ut-test').value;
+  const subject = document.getElementById('ut-subject').value;
+  const year = document.getElementById('ut-year').value;
+  if (!test || !subject) { showAlert('ut-alert','Please select test and subject.','error'); return; }
+
+  const entries = [];
+  document.querySelectorAll('#ut-bulk-tbody tr').forEach(tr => {
+    const entry = {
+      student_id: tr.dataset.studentId,
+      academic_year: year,
+      test_name: test,
+      subject: subject
+    };
+    tr.querySelectorAll('.ut-marks-input').forEach((inp, i) => {
+      entry[`part${i+1}_marks`] = inp.value || '';
+    });
+    entries.push(entry);
+  });
+
+  const btn = document.getElementById('ut-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const r = await fetch('/api/unittests/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries }) });
+    const d = await r.json();
+    if (r.ok) showAlert('ut-alert', `✅ Saved ${d.saved} marks. Will sync to local system within 2 minutes.`, 'success');
+    else showAlert('ut-alert', d.error || 'Save failed.', 'error');
+  } catch(e) { showAlert('ut-alert','Network error.','error'); }
+  btn.disabled = false; btn.textContent = '💾 Save All Marks';
 }
 
 // ── Helpers ───────────────────────────────────────────────────
 function showAlert(id, msg, type) {
   const el = document.getElementById(id);
   el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-  setTimeout(() => { el.innerHTML = ''; }, 6000);
+  setTimeout(() => { el.innerHTML = ''; }, 7000);
 }
 
-// Enter key login
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') doLogin();
 });
 
-// Init
-checkSession();
-
 // Set today's date as default for diary
 document.getElementById('d-date').value = new Date().toISOString().split('T')[0];
+
+checkSession();
 </script>
 </body>
 </html>
