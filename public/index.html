@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diamond School — Online Portal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
+
+  /* Login */
+  #login-page { display:flex; align-items:center; justify-content:center; min-height:100vh; background: linear-gradient(135deg,#1e3a5f,#2d6a9f); }
+  .login-box { background:#fff; border-radius:12px; padding:40px 36px; width:100%; max-width:380px; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
+  .login-box h1 { font-size:22px; color:#1e3a5f; margin-bottom:4px; }
+  .login-box p { font-size:13px; color:#718096; margin-bottom:28px; }
+  .login-box label { display:block; font-size:13px; font-weight:600; color:#4a5568; margin-bottom:6px; }
+  .login-box input { width:100%; padding:10px 14px; border:1px solid #cbd5e0; border-radius:8px; font-size:14px; margin-bottom:18px; }
+  .login-box input:focus { outline:none; border-color:#2d6a9f; box-shadow:0 0 0 3px rgba(45,106,159,0.15); }
+  .btn-primary { width:100%; padding:11px; background:#1e3a5f; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
+  .btn-primary:hover { background:#2d6a9f; }
+  .error-msg { color:#e53e3e; font-size:13px; margin-top:10px; text-align:center; }
+
+  /* App */
+  #app-page { display:none; }
+  .topbar { background:#1e3a5f; color:#fff; padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+  .topbar h1 { font-size:17px; font-weight:600; }
+  .topbar-right { display:flex; align-items:center; gap:16px; font-size:13px; }
+  .btn-logout { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
+  .btn-logout:hover { background:rgba(255,255,255,0.25); }
+
+  .tabs { background:#fff; border-bottom:2px solid #e2e8f0; display:flex; padding:0 24px; }
+  .tab { padding:14px 20px; font-size:14px; font-weight:600; color:#718096; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; }
+  .tab.active { color:#1e3a5f; border-bottom-color:#1e3a5f; }
+  .tab:hover { color:#2d6a9f; }
+
+  .content { padding:24px; max-width:960px; margin:0 auto; }
+
+  /* Cards */
+  .card { background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:20px; }
+  .card h2 { font-size:16px; font-weight:600; color:#1e3a5f; margin-bottom:18px; border-bottom:1px solid #e2e8f0; padding-bottom:12px; }
+
+  /* Forms */
+  .form-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
+  .form-group { flex:1; min-width:180px; }
+  .form-group label { display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px; color:#1a202c;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline:none; border-color:#2d6a9f; box-shadow:0 0 0 3px rgba(45,106,159,0.12);
+  }
+  .form-group textarea { resize:vertical; min-height:60px; }
+
+  /* Section headings inside forms */
+  .section-title { font-size:13px; font-weight:700; color:#4a5568; text-transform:uppercase; letter-spacing:0.5px; margin:20px 0 12px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0; }
+
+  /* Subjects table */
+  .subjects-table { width:100%; border-collapse:collapse; font-size:14px; margin-bottom:14px; }
+  .subjects-table th { background:#f7fafc; text-align:left; padding:8px 10px; font-size:12px; color:#718096; font-weight:600; border-bottom:2px solid #e2e8f0; }
+  .subjects-table td { padding:6px 10px; border-bottom:1px solid #f0f4f8; }
+  .subjects-table input { width:100%; padding:5px 8px; border:1px solid #e2e8f0; border-radius:5px; font-size:13px; }
+  .subjects-table input:focus { outline:none; border-color:#2d6a9f; }
+  .btn-add-subject { background:#edf2f7; border:none; padding:7px 14px; border-radius:6px; font-size:13px; cursor:pointer; color:#4a5568; }
+  .btn-add-subject:hover { background:#e2e8f0; }
+  .btn-remove { background:none; border:none; color:#e53e3e; cursor:pointer; font-size:16px; padding:2px 6px; }
+
+  /* Buttons */
+  .btn-save { background:#1e3a5f; color:#fff; border:none; padding:10px 28px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-save:hover { background:#2d6a9f; }
+  .btn-save:disabled { background:#a0aec0; cursor:not-allowed; }
+  .btn-secondary { background:#edf2f7; color:#4a5568; border:none; padding:9px 20px; border-radius:8px; font-size:14px; cursor:pointer; }
+
+  /* Alerts */
+  .alert { padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:14px; }
+  .alert-success { background:#f0fff4; color:#276749; border:1px solid #c6f6d5; }
+  .alert-error { background:#fff5f5; color:#9b2c2c; border:1px solid #fed7d7; }
+  .alert-info { background:#ebf8ff; color:#2c5282; border:1px solid #bee3f8; }
+
+  /* Bulk diary table */
+  .bulk-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .bulk-table th { background:#1e3a5f; color:#fff; padding:9px 10px; text-align:left; font-size:12px; }
+  .bulk-table td { padding:5px 6px; border-bottom:1px solid #e2e8f0; }
+  .bulk-table tr:hover td { background:#f7fafc; }
+  .bulk-table input { width:100%; padding:5px 7px; border:1px solid #e2e8f0; border-radius:4px; font-size:12px; }
+  .bulk-table input:focus { outline:none; border-color:#2d6a9f; }
+
+  /* Loading spinner */
+  .spinner { display:inline-block; width:18px; height:18px; border:2px solid #e2e8f0; border-top-color:#2d6a9f; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:8px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Responsive */
+  @media(max-width:600px) {
+    .form-row { flex-direction:column; }
+    .content { padding:16px; }
+    .topbar h1 { font-size:14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-box">
+    <h1>🏫 Diamond School</h1>
+    <p>Online Teacher Portal — Report Cards & Daily Diary</p>
+    <label>Username</label>
+    <input type="text" id="login-username" placeholder="Enter username" autocomplete="username">
+    <label>Password</label>
+    <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">Login</button>
+    <div id="login-error" class="error-msg"></div>
+  </div>
+</div>
+
+<!-- APP PAGE -->
+<div id="app-page">
+  <div class="topbar">
+    <h1>🏫 Diamond School — Online Portal</h1>
+    <div class="topbar-right">
+      <span id="user-name-display"></span>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('reportcard')">📋 Report Cards</div>
+    <div class="tab" onclick="switchTab('diary')">📖 Daily Diary</div>
+  </div>
+
+  <div class="content">
+
+    <!-- REPORT CARD TAB -->
+    <div id="tab-reportcard">
+      <div class="card">
+        <h2>Select Student & Term</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>School</label>
+            <select id="rc-school" onchange="loadRcClasses()">
+              <option value="">— Select School —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Class</label>
+            <select id="rc-class" onchange="loadRcStudents()">
+              <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Student</label>
+            <select id="rc-student" onchange="loadReportCard()">
+              <option value="">— Select Student —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Term</label>
+            <select id="rc-term" onchange="loadReportCard()">
+              <option value="">— Select Term —</option>
+              <option>Term 1</option>
+              <option>Term 2</option>
+              <option>Term 3</option>
+              <option>Preliminary</option>
+              <option>Annual</option>
+              <option>FA1</option><option>FA2</option><option>FA3</option><option>FA4</option>
+              <option>SA1</option><option>SA2</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Academic Year</label>
+            <select id="rc-year">
+              <option>2025-26</option>
+              <option>2024-25</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="rc-form-area" style="display:none;">
+        <div class="card">
+          <h2>Attendance & Remarks</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Days Present</label>
+              <input type="number" id="rc-present" min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>Total Working Days</label>
+              <input type="number" id="rc-total" min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>Conduct</label>
+              <input type="text" id="rc-conduct" placeholder="e.g. Good, Excellent">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Teacher's Remarks</label>
+              <textarea id="rc-remarks" placeholder="Enter remarks..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Co-Scholastic Assessment (Grades)</h2>
+          <div class="form-row">
+            <div class="form-group"><label>Activity</label><input type="text" id="rc-activity" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Arts & Craft</label><input type="text" id="rc-arts" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Communication</label><input type="text" id="rc-communication" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Discipline</label><input type="text" id="rc-discipline" placeholder="A/B/C/D"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Homework</label><input type="text" id="rc-homework" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Participation</label><input type="text" id="rc-participation" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Respect</label><input type="text" id="rc-respect" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Teamwork</label><input type="text" id="rc-teamwork" placeholder="A/B/C/D"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Punctuality</label><input type="text" id="rc-punctuality" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Improvement</label><input type="text" id="rc-improvement" placeholder="A/B/C/D"></div>
+            <div class="form-group"><label>Daily Activity</label><input type="text" id="rc-daily_activity" placeholder="A/B/C/D"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Subject Marks</h2>
+          <table class="subjects-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Marks Obtained</th>
+                <th>Total Marks</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="subjects-tbody"></tbody>
+          </table>
+          <button class="btn-add-subject" onclick="addSubjectRow()">+ Add Subject</button>
+        </div>
+
+        <div id="rc-alert"></div>
+        <button class="btn-save" onclick="saveReportCard()">💾 Save Report Card</button>
+      </div>
+    </div>
+
+    <!-- DAILY DIARY TAB -->
+    <div id="tab-diary" style="display:none;">
+      <div class="card">
+        <h2>Select Class & Date</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>School</label>
+            <select id="d-school" onchange="loadDiaryClasses()">
+              <option value="">— Select School —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Class</label>
+            <select id="d-class" onchange="loadDiaryStudents()">
+              <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="d-date" onchange="loadDiaryStudents()">
+          </div>
+        </div>
+      </div>
+
+      <div id="diary-bulk-area" style="display:none;">
+        <div class="card">
+          <h2>Diary Entry — Bulk (whole class)</h2>
+          <div id="diary-alert"></div>
+          <div style="overflow-x:auto;">
+            <table class="bulk-table" id="diary-bulk-table">
+              <thead>
+                <tr>
+                  <th>Roll</th>
+                  <th>Student Name</th>
+                  <th>Activity</th>
+                  <th>Behaviour</th>
+                  <th>Homework</th>
+                  <th>Classwork</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="diary-bulk-tbody"></tbody>
+            </table>
+          </div>
+          <br>
+          <button class="btn-save" onclick="saveBulkDiary()">💾 Save All Entries</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let allClasses = [];
+
+// ── Auth ───────────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  document.getElementById('login-error').textContent = '';
+  if (!username || !password) { document.getElementById('login-error').textContent = 'Enter username and password.'; return; }
+  try {
+    const r = await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    const d = await r.json();
+    if (!r.ok) { document.getElementById('login-error').textContent = d.error || 'Login failed.'; return; }
+    currentUser = d.user;
+    showApp();
+  } catch(e) { document.getElementById('login-error').textContent = 'Network error. Try again.'; }
+}
+
+async function doLogout() {
+  await fetch('/api/auth/logout', { method:'POST' });
+  currentUser = null;
+  document.getElementById('app-page').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+}
+
+// ── App init ──────────────────────────────────────────────────
+async function checkSession() {
+  try {
+    const r = await fetch('/api/auth/me');
+    if (r.ok) { const d = await r.json(); currentUser = d.user; showApp(); }
+    else { document.getElementById('login-page').style.display = 'flex'; }
+  } catch(e) { document.getElementById('login-page').style.display = 'flex'; }
+}
+
+async function showApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app-page').style.display = 'block';
+  document.getElementById('user-name-display').textContent = currentUser.name + ' (' + currentUser.role + ')';
+  await loadAllClasses();
+  populateSchoolDropdowns();
+}
+
+async function loadAllClasses() {
+  const r = await fetch('/api/students/classes');
+  allClasses = r.ok ? await r.json() : [];
+}
+
+function populateSchoolDropdowns() {
+  const schools = [...new Set(allClasses.map(c => c.school))];
+  ['rc-school','d-school'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">— Select School —</option>';
+    schools.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  });
+}
+
+// ── Tabs ──────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === (name==='reportcard'?0:1)));
+  document.getElementById('tab-reportcard').style.display = name==='reportcard' ? '' : 'none';
+  document.getElementById('tab-diary').style.display = name==='diary' ? '' : 'none';
+}
+
+// ── Report Card ───────────────────────────────────────────────
+function loadRcClasses() {
+  const school = document.getElementById('rc-school').value;
+  const classes = [...new Set(allClasses.filter(c => c.school===school).map(c => c.class_name))];
+  const sel = document.getElementById('rc-class');
+  sel.innerHTML = '<option value="">— Select Class —</option>';
+  classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
+  document.getElementById('rc-student').innerHTML = '<option value="">— Select Student —</option>';
+  document.getElementById('rc-form-area').style.display = 'none';
+}
+
+async function loadRcStudents() {
+  const school = document.getElementById('rc-school').value;
+  const cls = document.getElementById('rc-class').value;
+  if (!school || !cls) return;
+  const r = await fetch(`/api/students?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}`);
+  const students = r.ok ? await r.json() : [];
+  const sel = document.getElementById('rc-student');
+  sel.innerHTML = '<option value="">— Select Student —</option>';
+  students.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = (s.roll_no ? s.roll_no + '. ' : '') + s.name;
+    sel.appendChild(o);
+  });
+  document.getElementById('rc-form-area').style.display = 'none';
+}
+
+async function loadReportCard() {
+  const studentId = document.getElementById('rc-student').value;
+  const term = document.getElementById('rc-term').value;
+  const year = document.getElementById('rc-year').value;
+  if (!studentId || !term) return;
+
+  document.getElementById('rc-form-area').style.display = 'block';
+  clearRcForm();
+
+  const r = await fetch(`/api/reportcards?student_id=${studentId}&term=${encodeURIComponent(term)}&academic_year=${year}`);
+  if (!r.ok) return;
+  const { card, marks } = await r.json();
+  if (!card) return;
+
+  const fields = ['present','total','conduct','remarks','activity','arts','communication',
+    'discipline','homework','participation','respect','teamwork','punctuality','improvement','daily_activity'];
+  const map = { present:'attendance_present', total:'attendance_total' };
+  fields.forEach(f => {
+    const el = document.getElementById('rc-'+f);
+    if (el) el.value = card[map[f]||f] || '';
+  });
+
+  // Load marks
+  const tbody = document.getElementById('subjects-tbody');
+  tbody.innerHTML = '';
+  (marks||[]).forEach(m => addSubjectRow(m.subject, m.marks_obtained, m.marks_total));
+}
+
+function clearRcForm() {
+  ['present','total','conduct','remarks','activity','arts','communication','discipline',
+   'homework','participation','respect','teamwork','punctuality','improvement','daily_activity']
+   .forEach(f => { const el = document.getElementById('rc-'+f); if(el) el.value=''; });
+  document.getElementById('subjects-tbody').innerHTML = '';
+  document.getElementById('rc-alert').innerHTML = '';
+}
+
+function addSubjectRow(subject='', obtained='', total='') {
+  const tbody = document.getElementById('subjects-tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="e.g. Mathematics" value="${subject}"></td>
+    <td><input type="number" placeholder="0" value="${obtained??''}"></td>
+    <td><input type="number" placeholder="100" value="${total??''}"></td>
+    <td><button class="btn-remove" onclick="this.closest('tr').remove()">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+async function saveReportCard() {
+  const studentId = document.getElementById('rc-student').value;
+  const term = document.getElementById('rc-term').value;
+  const year = document.getElementById('rc-year').value;
+  if (!studentId || !term) { showAlert('rc-alert','Please select student and term.','error'); return; }
+
+  const subjects = [];
+  document.querySelectorAll('#subjects-tbody tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    if (inputs[0].value.trim()) {
+      subjects.push({ subject: inputs[0].value.trim(), marks_obtained: inputs[1].value||null, marks_total: inputs[2].value||null });
+    }
+  });
+
+  const body = {
+    student_id: studentId, term, academic_year: year,
+    attendance_present: document.getElementById('rc-present').value,
+    attendance_total: document.getElementById('rc-total').value,
+    conduct: document.getElementById('rc-conduct').value,
+    remarks: document.getElementById('rc-remarks').value,
+    activity: document.getElementById('rc-activity').value,
+    arts: document.getElementById('rc-arts').value,
+    communication: document.getElementById('rc-communication').value,
+    discipline: document.getElementById('rc-discipline').value,
+    homework: document.getElementById('rc-homework').value,
+    participation: document.getElementById('rc-participation').value,
+    respect: document.getElementById('rc-respect').value,
+    teamwork: document.getElementById('rc-teamwork').value,
+    punctuality: document.getElementById('rc-punctuality').value,
+    improvement: document.getElementById('rc-improvement').value,
+    daily_activity: document.getElementById('rc-daily_activity').value,
+    subjects
+  };
+
+  const btn = document.querySelector('#tab-reportcard .btn-save');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const r = await fetch('/api/reportcards', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (r.ok) showAlert('rc-alert','Report card saved successfully! Will sync to local system within 2 minutes.','success');
+    else showAlert('rc-alert', d.error || 'Save failed.','error');
+  } catch(e) { showAlert('rc-alert','Network error.','error'); }
+  btn.disabled = false; btn.textContent = '💾 Save Report Card';
+}
+
+// ── Daily Diary ───────────────────────────────────────────────
+function loadDiaryClasses() {
+  const school = document.getElementById('d-school').value;
+  const classes = [...new Set(allClasses.filter(c => c.school===school).map(c => c.class_name))];
+  const sel = document.getElementById('d-class');
+  sel.innerHTML = '<option value="">— Select Class —</option>';
+  classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
+  document.getElementById('diary-bulk-area').style.display = 'none';
+}
+
+async function loadDiaryStudents() {
+  const school = document.getElementById('d-school').value;
+  const cls = document.getElementById('d-class').value;
+  const date = document.getElementById('d-date').value;
+  if (!school || !cls || !date) return;
+
+  const r = await fetch(`/api/students?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}`);
+  const students = r.ok ? await r.json() : [];
+
+  // Load existing diary entries for this class+date
+  const dr = await fetch(`/api/diary?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}&date=${date}`);
+  const existing = dr.ok ? await dr.json() : [];
+  const existingMap = {};
+  existing.forEach(e => { existingMap[e.student_id] = e; });
+
+  const tbody = document.getElementById('diary-bulk-tbody');
+  tbody.innerHTML = '';
+  students.forEach(s => {
+    const ex = existingMap[s.id] || {};
+    const tr = document.createElement('tr');
+    tr.dataset.studentId = s.id;
+    tr.innerHTML = `
+      <td>${s.roll_no||''}</td>
+      <td><strong>${s.name}</strong></td>
+      <td><input type="text" value="${ex.activity||''}" placeholder="Activity"></td>
+      <td><input type="text" value="${ex.behaviour||''}" placeholder="Behaviour"></td>
+      <td><input type="text" value="${ex.homework||''}" placeholder="Homework"></td>
+      <td><input type="text" value="${ex.classwork||''}" placeholder="Classwork"></td>
+      <td><input type="text" value="${ex.remarks||''}" placeholder="Remarks"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('diary-bulk-area').style.display = students.length ? '' : 'none';
+  document.getElementById('diary-alert').innerHTML = '';
+}
+
+async function saveBulkDiary() {
+  const date = document.getElementById('d-date').value;
+  if (!date) { showAlert('diary-alert','Please select a date.','error'); return; }
+
+  const entries = [];
+  document.querySelectorAll('#diary-bulk-tbody tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    entries.push({
+      student_id: tr.dataset.studentId,
+      entry_date: date,
+      activity: inputs[0].value,
+      behaviour: inputs[1].value,
+      homework: inputs[2].value,
+      classwork: inputs[3].value,
+      remarks: inputs[4].value
+    });
+  });
+
+  const btn = document.querySelector('#tab-diary .btn-save');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const r = await fetch('/api/diary/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries }) });
+    const d = await r.json();
+    if (r.ok) showAlert('diary-alert', `Saved ${d.saved} entries. Will sync to local system within 2 minutes.`, 'success');
+    else showAlert('diary-alert', d.error || 'Save failed.', 'error');
+  } catch(e) { showAlert('diary-alert','Network error.','error'); }
+  btn.disabled = false; btn.textContent = '💾 Save All Entries';
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 6000);
+}
+
+// Enter key login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') doLogin();
+});
+
+// Init
+checkSession();
+
+// Set today's date as default for diary
+document.getElementById('d-date').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
