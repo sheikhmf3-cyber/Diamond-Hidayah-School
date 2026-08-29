@@ -262,8 +262,11 @@
     <!-- ═══════════════════════════════ UNIT TEST TAB ═══════════════════════════════ -->
     <div id="tab-unittest" style="display:none;">
       <div class="card">
-        <h2>Select Class & Test</h2>
-        <div class="form-row">
+        <h2>✏️ Unit Test Marks (Std 1st–10th)</h2>
+        <p style="font-size:13px;color:#718096;margin-bottom:16px;">
+          Bulk entry for all subjects. Writing/Oral components shown per class format. Total calculated automatically.
+        </p>
+        <div class="form-row" style="align-items:flex-end;">
           <div class="form-group">
             <label>School</label>
             <select id="ut-school" onchange="loadUtClasses()">
@@ -272,27 +275,8 @@
           </div>
           <div class="form-group">
             <label>Class</label>
-            <select id="ut-class" onchange="loadUtSubjects()">
+            <select id="ut-class">
               <option value="">— Select Class —</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Test Name</label>
-            <select id="ut-test" onchange="loadUtStudents()">
-              <option value="">— Select Test —</option>
-              <option>Unit Test 1</option>
-              <option>Unit Test 2</option>
-              <option>Unit Test 3</option>
-              <option>Unit Test 4</option>
-              <option>Half Yearly</option>
-              <option>Annual</option>
-              <option>Preliminary</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Subject</label>
-            <select id="ut-subject" onchange="loadUtStudents()">
-              <option value="">— Select Subject —</option>
             </select>
           </div>
           <div class="form-group">
@@ -303,22 +287,40 @@
               <option>2024-25</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Test Name</label>
+            <select id="ut-test">
+              <option value="">— Select Test —</option>
+              <option>Unit Test 1</option>
+              <option>Unit Test 2</option>
+              <option>Unit Test 3</option>
+              <option>Unit Test 4</option>
+              <option>Half Yearly</option>
+              <option>Annual</option>
+              <option>Preliminary</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:0 0 auto;">
+            <label>&nbsp;</label>
+            <button class="btn-save" onclick="loadUtStudents()" style="white-space:nowrap;">🔄 Load Class</button>
+          </div>
         </div>
         <div id="ut-load-status" style="font-size:13px;color:#718096;"></div>
       </div>
 
       <div id="ut-bulk-area" style="display:none;">
-        <div class="card">
-          <h2 id="ut-bulk-title">Unit Test Marks Entry</h2>
+        <div class="card" style="padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+            <h2 id="ut-bulk-title" style="margin:0;border:none;padding:0;">Unit Test Marks</h2>
+            <button class="btn-save" id="ut-save-btn" onclick="saveUnitTests()">💾 Save All</button>
+          </div>
           <div id="ut-alert"></div>
           <div style="overflow-x:auto;">
-            <table class="bulk-table">
-              <thead></thead>
+            <table id="ut-main-table" style="border-collapse:collapse;font-size:12px;white-space:nowrap;">
+              <thead id="ut-thead"></thead>
               <tbody id="ut-bulk-tbody"></tbody>
             </table>
           </div>
-          <br>
-          <button class="btn-save" id="ut-save-btn" onclick="saveUnitTests()">💾 Save All Marks</button>
         </div>
       </div>
     </div>
@@ -583,8 +585,8 @@ async function saveBulkDiary() {
   btn.disabled = false; btn.textContent = '💾 Save All Entries';
 }
 
-// ── Unit Tests ────────────────────────────────────────────────
-let utSubjectConfig = []; // parts config for current class+subject
+// ── Unit Tests (all subjects, local format) ───────────────────
+let utSubjects = []; // full subject+parts config for current class
 
 function loadUtClasses() {
   const school = document.getElementById('ut-school').value;
@@ -592,25 +594,6 @@ function loadUtClasses() {
   const sel = document.getElementById('ut-class');
   sel.innerHTML = '<option value="">— Select Class —</option>';
   classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
-  document.getElementById('ut-subject').innerHTML = '<option value="">— Select Subject —</option>';
-  document.getElementById('ut-bulk-area').style.display = 'none';
-}
-
-async function loadUtSubjects() {
-  const cls = document.getElementById('ut-class').value;
-  if (!cls) return;
-  // Load subject list for this class from server
-  const r = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
-  const data = r.ok ? await r.json() : { subjects: [] };
-  const sel = document.getElementById('ut-subject');
-  sel.innerHTML = '<option value="">— Select Subject —</option>';
-  (data.subjects || []).forEach(s => {
-    const total = s.parts.reduce((a,p) => a+p.max, 0);
-    const o = document.createElement('option');
-    o.value = s.name;
-    o.textContent = `${s.name} (Total: ${total})`;
-    sel.appendChild(o);
-  });
   document.getElementById('ut-bulk-area').style.display = 'none';
 }
 
@@ -618,107 +601,156 @@ async function loadUtStudents() {
   const school = document.getElementById('ut-school').value;
   const cls = document.getElementById('ut-class').value;
   const test = document.getElementById('ut-test').value;
-  const subject = document.getElementById('ut-subject').value;
   const year = document.getElementById('ut-year').value;
-  if (!school || !cls || !test || !subject) return;
-
-  document.getElementById('ut-load-status').textContent = 'Loading students...';
-
-  // Get subject parts config
-  const cr = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
-  const cdata = cr.ok ? await cr.json() : { subjects: [] };
-  const subjDef = (cdata.subjects || []).find(s => s.name === subject);
-  utSubjectConfig = subjDef ? subjDef.parts : [];
-
-  const students = await fetchStudents(school, cls);
-  if (!students.length) {
-    document.getElementById('ut-load-status').textContent = 'No students found.';
-    document.getElementById('ut-bulk-area').style.display = 'none';
+  if (!school || !cls || !test) {
+    document.getElementById('ut-load-status').textContent = 'Please select school, class and test.';
     return;
   }
 
-  // Fetch existing marks
+  document.getElementById('ut-load-status').textContent = 'Loading...';
+  document.getElementById('ut-bulk-area').style.display = 'none';
+
+  // Get subject+parts config for this class
+  const cr = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
+  const cdata = cr.ok ? await cr.json() : { subjects: [] };
+  utSubjects = cdata.subjects || [];
+
+  if (!utSubjects.length) {
+    document.getElementById('ut-load-status').textContent = 'No subject config found for this class.';
+    return;
+  }
+
+  // Get students
+  const students = await fetchStudents(school, cls);
+  if (!students.length) {
+    document.getElementById('ut-load-status').textContent = 'No students found.';
+    return;
+  }
+
+  // Get existing marks for this class+test+year
   const mr = await fetch(`/api/unittests?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}&test_name=${encodeURIComponent(test)}&academic_year=${year}`);
   const existing = mr.ok ? await mr.json() : [];
+  // existingMap[student_id][subject] = row
   const existingMap = {};
-  existing.filter(e => e.subject === subject).forEach(e => { existingMap[e.student_id] = e; });
+  existing.forEach(e => {
+    if (!existingMap[e.student_id]) existingMap[e.student_id] = {};
+    existingMap[e.student_id][e.subject] = e;
+  });
 
-  // Build table header dynamically based on parts
-  const totalMarks = utSubjectConfig.reduce((a,p) => a+p.max, 0);
-  document.getElementById('ut-bulk-title').textContent = `${test} — ${subject} (Total: ${totalMarks})`;
+  document.getElementById('ut-bulk-title').textContent = `${test} — ${cls} — ${year}`;
 
-  // Build thead
-  const table = document.querySelector('#ut-bulk-area table');
-  let theadHtml = '<tr><th style="width:50px">Roll</th><th style="min-width:160px">Student</th>';
-  utSubjectConfig.forEach(p => { theadHtml += `<th style="min-width:90px">${p.label}<br><small>/${p.max}</small></th>`; });
-  theadHtml += '<th style="min-width:80px">Total</th></tr>';
-  table.querySelector('thead').innerHTML = theadHtml;
+  // ── Build header row 1: subject names spanning their parts ──
+  const thead = document.getElementById('ut-thead');
+  let h1 = `<tr style="background:#1e3a5f;color:#fff;">
+    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:40px;position:sticky;left:0;background:#1e3a5f;z-index:2;">Roll</th>
+    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:150px;position:sticky;left:40px;background:#1e3a5f;z-index:2;">Name</th>`;
+  utSubjects.forEach(subj => {
+    const total = subj.parts.reduce((a,p) => a+p.max, 0);
+    h1 += `<th colspan="${subj.parts.length + 1}" style="padding:6px 8px;border:1px solid #2d5a8e;text-align:center;">${subj.name}<br><small style="font-weight:normal;opacity:0.85">/${total}</small></th>`;
+  });
+  h1 += '</tr>';
 
+  // ── Header row 2: part labels + Total per subject ──
+  let h2 = '<tr style="background:#2d5080;color:#fff;">';
+  utSubjects.forEach(subj => {
+    subj.parts.forEach(p => {
+      h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;">${p.label}<br><small>/${p.max}</small></th>`;
+    });
+    h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;background:#1a3a5f;">Total</th>`;
+  });
+  h2 += '</tr>';
+  thead.innerHTML = h1 + h2;
+
+  // ── Build student rows ──
   const tbody = document.getElementById('ut-bulk-tbody');
   tbody.innerHTML = '';
-  students.forEach(s => {
-    const ex = existingMap[s.id] || {};
+
+  students.forEach((s, si) => {
     const tr = document.createElement('tr');
     tr.dataset.studentId = s.id;
-    let tds = `<td style="font-weight:600">${s.roll_no||''}</td><td><strong>${s.name}</strong></td>`;
-    utSubjectConfig.forEach((p, i) => {
-      const val = ex[`part${i+1}_marks`] || '';
-      tds += `<td><input type="number" class="ut-marks-input" data-part="${p.key}" data-max="${p.max}" value="${val}" placeholder="0" min="0" max="${p.max}" oninput="updateUtTotal(this)"></td>`;
+    tr.style.background = si % 2 === 0 ? '#fff' : '#f7fafc';
+
+    let tds = `
+      <td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:700;text-align:center;position:sticky;left:0;background:inherit;z-index:1;">${s.roll_no||''}</td>
+      <td style="padding:4px 10px;border:1px solid #e2e8f0;font-weight:600;position:sticky;left:40px;background:inherit;z-index:1;">${s.name}</td>
+    `;
+
+    utSubjects.forEach(subj => {
+      const ex = (existingMap[s.id] && existingMap[s.id][subj.name]) || {};
+      let subjTotal = 0;
+      subj.parts.forEach((p, pi) => {
+        const val = ex[`part${pi+1}_marks`] || '';
+        subjTotal += parseFloat(val) || 0;
+        tds += `<td style="padding:3px 4px;border:1px solid #e2e8f0;text-align:center;">
+          <input type="number" min="0" max="${p.max}"
+            data-subj="${subj.name}" data-part="${pi+1}" data-max="${p.max}"
+            value="${val}" placeholder="0"
+            oninput="utClampAndTotal(this)"
+            style="width:52px;padding:4px;border:1px solid #cbd5e0;border-radius:4px;text-align:center;font-size:13px;">
+        </td>`;
+      });
+      tds += `<td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;background:#edf2f7;">
+        <strong class="ut-subj-total" data-subj="${subj.name}">${subjTotal > 0 ? subjTotal : ''}</strong>
+      </td>`;
     });
-    // Total display
-    const obtained = ex.obtained_marks || '';
-    tds += `<td><strong class="ut-row-total">${obtained}</strong></td>`;
+
     tr.innerHTML = tds;
     tbody.appendChild(tr);
   });
 
-  document.getElementById('ut-load-status').textContent = `${students.length} students loaded.`;
+  document.getElementById('ut-load-status').textContent = `✓ ${students.length} students loaded — ${utSubjects.length} subjects.`;
   document.getElementById('ut-bulk-area').style.display = '';
   document.getElementById('ut-alert').innerHTML = '';
 }
 
-function updateUtTotal(input) {
+function utClampAndTotal(input) {
   // Clamp to max
-  if (input.value !== '' && parseFloat(input.value) > parseFloat(input.dataset.max)) {
-    input.value = input.dataset.max;
-  }
-  // Recompute row total
+  const max = parseFloat(input.dataset.max);
+  if (input.value !== '' && parseFloat(input.value) > max) input.value = max;
+  if (input.value !== '' && parseFloat(input.value) < 0) input.value = 0;
+
+  // Recompute this subject's total in this row
+  const subjName = input.dataset.subj;
   const tr = input.closest('tr');
-  const inputs = tr.querySelectorAll('.ut-marks-input');
+  const subjInputs = tr.querySelectorAll(`input[data-subj="${subjName}"]`);
   let total = 0;
-  inputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
-  tr.querySelector('.ut-row-total').textContent = total;
+  subjInputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
+  const totalCell = tr.querySelector(`.ut-subj-total[data-subj="${subjName}"]`);
+  if (totalCell) totalCell.textContent = total || '';
 }
 
 async function saveUnitTests() {
   const test = document.getElementById('ut-test').value;
-  const subject = document.getElementById('ut-subject').value;
   const year = document.getElementById('ut-year').value;
-  if (!test || !subject) { showAlert('ut-alert','Please select test and subject.','error'); return; }
+  if (!test) { showAlert('ut-alert','Please select test name.','error'); return; }
 
   const entries = [];
   document.querySelectorAll('#ut-bulk-tbody tr').forEach(tr => {
-    const entry = {
-      student_id: tr.dataset.studentId,
-      academic_year: year,
-      test_name: test,
-      subject: subject
-    };
-    tr.querySelectorAll('.ut-marks-input').forEach((inp, i) => {
-      entry[`part${i+1}_marks`] = inp.value || '';
+    const studentId = tr.dataset.studentId;
+    // One entry per subject per student
+    utSubjects.forEach(subj => {
+      const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
+      subj.parts.forEach((p, pi) => {
+        const inp = tr.querySelector(`input[data-subj="${subj.name}"][data-part="${pi+1}"]`);
+        entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
+      });
+      entries.push(entry);
     });
-    entries.push(entry);
   });
 
   const btn = document.getElementById('ut-save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const r = await fetch('/api/unittests/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries }) });
+    const r = await fetch('/api/unittests/bulk', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ entries })
+    });
     const d = await r.json();
-    if (r.ok) showAlert('ut-alert', `✅ Saved ${d.saved} marks. Will sync to local system within 2 minutes.`, 'success');
+    if (r.ok) showAlert('ut-alert', `✅ Saved marks for ${d.saved} subject-rows. Will sync to local system within 2 minutes.`, 'success');
     else showAlert('ut-alert', d.error || 'Save failed.', 'error');
   } catch(e) { showAlert('ut-alert','Network error.','error'); }
-  btn.disabled = false; btn.textContent = '💾 Save All Marks';
+  btn.disabled = false; btn.textContent = '💾 Save All';
 }
 
 // ── Helpers ───────────────────────────────────────────────────
