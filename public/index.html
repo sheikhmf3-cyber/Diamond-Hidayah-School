@@ -77,8 +77,44 @@
 
   @media(max-width:600px) {
     .form-row { flex-direction:column; }
-    .content { padding:16px; }
-    .topbar h1 { font-size:14px; }
+    .content { padding:12px; }
+    .topbar h1 { font-size:13px; }
+    .topbar { padding:0 12px; }
+    .tabs { padding:0 8px; }
+    .tab { padding:12px 12px; font-size:12px; }
+    .card { padding:14px; }
+
+    /* Unit test table: bigger touch targets on mobile */
+    #ut-main-table input, #ut-bulk-area input {
+      width:44px !important;
+      height:38px;
+      font-size:14px !important;
+      padding:2px !important;
+    }
+    #ut-thead th { font-size:9px !important; padding:4px 3px !important; }
+    #ut-bulk-tbody td { padding:3px 2px !important; }
+
+    /* Sticky columns narrower on mobile */
+    #ut-thead th:first-child, #ut-bulk-tbody td:first-child { min-width:30px !important; left:0; }
+    #ut-thead th:nth-child(2), #ut-bulk-tbody td:nth-child(2) { min-width:100px !important; left:30px; font-size:11px; }
+
+    /* Scroll hint */
+    .scroll-hint {
+      display:block; text-align:center; font-size:12px; color:#2d6a9f;
+      background:#ebf8ff; padding:8px; border-radius:6px; margin-bottom:10px;
+    }
+
+    /* Bulk diary table on mobile */
+    .bulk-table input { min-width:80px; font-size:13px !important; padding:6px !important; }
+    .bulk-table th, .bulk-table td { padding:4px 3px !important; font-size:11px !important; }
+
+    /* Buttons full width on mobile for easier tapping */
+    .btn-save { width:100%; padding:12px; font-size:15px; }
+    #ut-bulk-area .btn-save, #diary-bulk-area .btn-save { position:sticky; bottom:0; z-index:10; }
+  }
+
+  @media(min-width:601px) {
+    .scroll-hint { display:none; }
   }
 </style>
 </head>
@@ -238,7 +274,8 @@
         <div class="card">
           <h2>Daily Diary — Bulk Entry (Whole Class)</h2>
           <div id="diary-alert"></div>
-          <div style="overflow-x:auto;">
+          <div class="scroll-hint">👉 Swipe left/right to see all columns.</div>
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
             <table class="bulk-table" id="diary-bulk-table">
               <thead>
                 <tr>
@@ -311,7 +348,8 @@
             <button class="btn-save" id="ut-save-btn" onclick="saveUnitTests()">💾 Save All</button>
           </div>
           <div id="ut-alert"></div>
-          <div style="overflow-x:auto;">
+          <div class="scroll-hint">👉 Swipe left/right to see all subjects. Roll & Name stay visible.</div>
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
             <table id="ut-main-table" style="border-collapse:collapse;font-size:12px;white-space:nowrap;">
               <thead id="ut-thead"></thead>
               <tbody id="ut-bulk-tbody"></tbody>
