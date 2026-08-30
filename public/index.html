@@ -116,6 +116,42 @@
   @media(min-width:601px) {
     .scroll-hint { display:none; }
   }
+
+  /* ── Mobile card-style unit test layout ── */
+  .ut-mobile-card {
+    display:none;
+    background:#fff; border:1px solid #e2e8f0; border-radius:10px;
+    padding:16px; margin-bottom:14px;
+  }
+  .ut-mobile-card .ut-card-header {
+    display:flex; gap:12px; align-items:baseline; margin-bottom:14px;
+    padding-bottom:10px; border-bottom:1px solid #e2e8f0;
+  }
+  .ut-mobile-card .ut-roll-label { font-size:12px; color:#718096; font-weight:600; text-transform:uppercase; }
+  .ut-mobile-card .ut-roll-value { font-size:16px; font-weight:700; margin-right:16px; }
+  .ut-mobile-card .ut-name-value { font-size:16px; font-weight:700; color:#1e3a5f; }
+  .ut-mobile-subject { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid #f0f4f8; }
+  .ut-mobile-subject:last-child { border-bottom:none; }
+  .ut-mobile-subject-name { flex:0 0 90px; font-weight:700; font-size:14px; color:#1e3a5f; }
+  .ut-mobile-parts { flex:1; display:flex; flex-direction:column; gap:8px; align-items:flex-end; margin-right:12px; }
+  .ut-mobile-part-row { display:flex; align-items:center; gap:10px; width:100%; justify-content:flex-end; }
+  .ut-mobile-part-label { font-size:11px; color:#718096; font-weight:600; text-transform:uppercase; min-width:55px; text-align:right; }
+  .ut-mobile-part-row input {
+    width:70px; padding:10px; border:1px solid #cbd5e0; border-radius:8px;
+    font-size:16px; text-align:center;
+  }
+  .ut-mobile-part-row input:focus { outline:none; border-color:#2d6a9f; box-shadow:0 0 0 3px rgba(45,106,159,0.12); }
+  .ut-mobile-total { flex:0 0 70px; text-align:right; }
+  .ut-mobile-total-label { font-size:10px; color:#718096; }
+  .ut-mobile-total-value { font-size:16px; font-weight:700; color:#1e3a5f; }
+
+  @media(max-width:640px) {
+    #ut-desktop-table-wrap { display:none !important; }
+    .ut-mobile-card { display:block; }
+  }
+  @media(min-width:641px) {
+    .ut-mobile-card { display:none !important; }
+  }
 </style>
 </head>
 <body>
@@ -349,12 +385,13 @@
           </div>
           <div id="ut-alert"></div>
           <div class="scroll-hint">👉 Swipe left/right to see all subjects. Roll & Name stay visible.</div>
-          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <div id="ut-desktop-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
             <table id="ut-main-table" style="border-collapse:collapse;font-size:12px;white-space:nowrap;">
               <thead id="ut-thead"></thead>
               <tbody id="ut-bulk-tbody"></tbody>
             </table>
           </div>
+          <div id="ut-mobile-cards"></div>
         </div>
       </div>
     </div>
@@ -778,6 +815,7 @@ async function loadUtStudents() {
   thead.innerHTML = h1 + h2;
 
   // ── Build student rows ──
+  // ── Build DESKTOP table ──
   const tbody = document.getElementById('ut-bulk-tbody');
   tbody.innerHTML = '';
 
@@ -814,9 +852,77 @@ async function loadUtStudents() {
     tbody.appendChild(tr);
   });
 
+  // ── Build MOBILE cards (one card per student, subjects stacked vertically) ──
+  const mobileContainer = document.getElementById('ut-mobile-cards');
+  mobileContainer.innerHTML = '';
+
+  students.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'ut-mobile-card';
+    card.dataset.studentId = s.id;
+
+    let subjectsHtml = '';
+    utSubjects.forEach(subj => {
+      const ex = (existingMap[String(s.id)] && existingMap[String(s.id)][subj.name]) || {};
+      let subjTotal = 0;
+      let partsHtml = '';
+      subj.parts.forEach((p, pi) => {
+        const val = ex[`part${pi+1}_marks`] || '';
+        subjTotal += parseFloat(val) || 0;
+        partsHtml += `<div class="ut-mobile-part-row">
+          <span class="ut-mobile-part-label">${p.label}</span>
+          <input type="number" inputmode="numeric" min="0" max="${p.max}"
+            data-subj-m="${subj.name}" data-part-m="${pi+1}" data-max="${p.max}"
+            value="${val}" placeholder="0"
+            oninput="utMobileClampAndTotal(this)">
+        </div>`;
+      });
+      subjectsHtml += `<div class="ut-mobile-subject">
+        <div class="ut-mobile-subject-name">${subj.name}</div>
+        <div class="ut-mobile-parts">${partsHtml}</div>
+        <div class="ut-mobile-total">
+          <div class="ut-mobile-total-label">Total</div>
+          <div class="ut-mobile-total-value ut-mobile-subj-total" data-subj-total="${subj.name}">${subjTotal || 0}</div>
+        </div>
+      </div>`;
+    });
+
+    card.innerHTML = `
+      <div class="ut-card-header">
+        <span><span class="ut-roll-label">Roll</span> <span class="ut-roll-value">${s.roll_no||''}</span></span>
+        <span class="ut-name-value">${s.name}</span>
+      </div>
+      ${subjectsHtml}
+    `;
+    mobileContainer.appendChild(card);
+  });
+
   document.getElementById('ut-load-status').textContent = `✓ ${students.length} students loaded — ${utSubjects.length} subjects.`;
   document.getElementById('ut-bulk-area').style.display = '';
   document.getElementById('ut-alert').innerHTML = '';
+}
+
+function utMobileClampAndTotal(input) {
+  const max = parseFloat(input.dataset.max);
+  if (input.value !== '' && parseFloat(input.value) > max) input.value = max;
+  if (input.value !== '' && parseFloat(input.value) < 0) input.value = 0;
+
+  const subjName = input.dataset.subjM;
+  const card = input.closest('.ut-mobile-card');
+  const subjInputs = card.querySelectorAll(`input[data-subj-m="${subjName}"]`);
+  let total = 0;
+  subjInputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
+  const totalEl = card.querySelector(`.ut-mobile-subj-total[data-subj-total="${subjName}"]`);
+  if (totalEl) totalEl.textContent = total;
+
+  // Keep desktop table in sync too (in case user switches view)
+  const tr = document.querySelector(`#ut-bulk-tbody tr[data-student-id="${card.dataset.studentId}"]`);
+  if (tr) {
+    const deskInput = tr.querySelector(`input[data-subj="${subjName}"][data-part="${input.dataset.partM}"]`);
+    if (deskInput) deskInput.value = input.value;
+    const deskTotal = tr.querySelector(`.ut-subj-total[data-subj="${subjName}"]`);
+    if (deskTotal) deskTotal.textContent = total || '';
+  }
 }
 
 function utClampAndTotal(input) {
@@ -840,19 +946,35 @@ async function saveUnitTests() {
   const year = document.getElementById('ut-year').value;
   if (!test) { showAlert('ut-alert','Please select test name.','error'); return; }
 
+  // Determine which view is visible (mobile cards vs desktop table) and read from that
+  const isMobile = window.innerWidth <= 640;
   const entries = [];
-  document.querySelectorAll('#ut-bulk-tbody tr').forEach(tr => {
-    const studentId = tr.dataset.studentId;
-    // One entry per subject per student
-    utSubjects.forEach(subj => {
-      const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
-      subj.parts.forEach((p, pi) => {
-        const inp = tr.querySelector(`input[data-subj="${subj.name}"][data-part="${pi+1}"]`);
-        entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
+
+  if (isMobile) {
+    document.querySelectorAll('.ut-mobile-card').forEach(card => {
+      const studentId = card.dataset.studentId;
+      utSubjects.forEach(subj => {
+        const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
+        subj.parts.forEach((p, pi) => {
+          const inp = card.querySelector(`input[data-subj-m="${subj.name}"][data-part-m="${pi+1}"]`);
+          entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
+        });
+        entries.push(entry);
       });
-      entries.push(entry);
     });
-  });
+  } else {
+    document.querySelectorAll('#ut-bulk-tbody tr').forEach(tr => {
+      const studentId = tr.dataset.studentId;
+      utSubjects.forEach(subj => {
+        const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
+        subj.parts.forEach((p, pi) => {
+          const inp = tr.querySelector(`input[data-subj="${subj.name}"][data-part="${pi+1}"]`);
+          entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
+        });
+        entries.push(entry);
+      });
+    });
+  }
 
   const btn = document.getElementById('ut-save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
