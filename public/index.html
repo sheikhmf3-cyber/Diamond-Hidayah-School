@@ -955,52 +955,87 @@ async function showReportCards(school, cls, studentId, term, year, out) {
 }
 
 async function showUnitTestReport(school, cls, studentId, test, year, out) {
-  let url = `/api/unittests?academic_year=${year}`;
+  if (!cls) { out.innerHTML = '<div class="alert alert-error">Please select a Class to view Unit Test marks (format is per-class).</div>'; return; }
+  if (!test) { out.innerHTML = '<div class="alert alert-error">Please select a Test.</div>'; return; }
+
+  // Get subject config for this class (same as entry tab)
+  const cr = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
+  const cdata = cr.ok ? await cr.json() : { subjects: [] };
+  const subjects = cdata.subjects || [];
+  if (!subjects.length) { out.innerHTML = '<div class="alert alert-info">No subject config found for this class.</div>'; return; }
+
+  let url = `/api/unittests?academic_year=${year}&test_name=${encodeURIComponent(test)}`;
   if (school) url += `&school=${encodeURIComponent(school)}`;
   if (cls) url += `&class_name=${encodeURIComponent(cls)}`;
-  if (test) url += `&test_name=${encodeURIComponent(test)}`;
 
   const r = await fetch(url);
   if (!r.ok) { out.innerHTML = '<div class="alert alert-error">Failed to load unit test marks.</div>'; return; }
   let rows = await r.json();
-  if (studentId) rows = rows.filter(r => String(r.student_id) === String(studentId));
+  if (studentId) rows = rows.filter(rr => String(rr.student_id) === String(studentId));
   if (!rows.length) { out.innerHTML = '<div class="alert alert-info">No unit test marks found.</div>'; return; }
 
-  // Group by student
+  // Group by student: byStudent[student_id][subject] = row
   const byStudent = {};
-  rows.forEach(r => {
-    const key = String(r.student_id);
-    if (!byStudent[key]) byStudent[key] = { name: r.student_name, roll_no: r.roll_no, school: r.school, class_name: r.class_name, subjects: [] };
-    byStudent[key].subjects.push(r);
+  rows.forEach(rr => {
+    const key = String(rr.student_id);
+    if (!byStudent[key]) byStudent[key] = { name: rr.student_name, roll_no: rr.roll_no, subjects: {} };
+    byStudent[key].subjects[rr.subject] = rr;
   });
 
-  let html = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h2 style="margin:0;border:none;padding:0;">Unit Test Marks — ${test||'All Tests'} (${year})</h2>
-    <button class="btn-save" onclick="window.print()">🖨️ Print</button>
-  </div><div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:13px;">
-    <thead><tr style="background:#1e3a5f;color:#fff;">
-      <th style="padding:8px 10px;">Roll</th>
-      <th style="padding:8px 10px;">Student</th>
-      <th style="padding:8px 10px;">Subject</th>
-      <th style="padding:8px 10px;text-align:center;">Obtained</th>
-      <th style="padding:8px 10px;text-align:center;">Total</th>
-    </tr></thead><tbody>`;
+  const students = Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||0)-(parseInt(b.roll_no)||0));
 
-  let i = 0;
-  Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||0)-(parseInt(b.roll_no)||0)).forEach(st => {
-    st.subjects.forEach((subj, si) => {
-      html += `<tr style="background:${i%2===0?'#fff':'#f7fafc'}">
-        ${si===0 ? `<td style="padding:6px 10px;font-weight:700;" rowspan="${st.subjects.length}">${st.roll_no}</td>
-          <td style="padding:6px 10px;font-weight:600;" rowspan="${st.subjects.length}">${st.name}<br><small style="color:#718096;">${st.class_name} | ${st.school}</small></td>` : ''}
-        <td style="padding:6px 10px;">${subj.subject}</td>
-        <td style="padding:6px 10px;text-align:center;font-weight:600;">${subj.obtained_marks||'—'}</td>
-        <td style="padding:6px 10px;text-align:center;">${subj.total_marks||'—'}</td>
-      </tr>`;
-      i++;
+  // Build header rows exactly like the entry tab
+  let h1 = `<tr style="background:#1e3a5f;color:#fff;">
+    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:40px;position:sticky;left:0;background:#1e3a5f;z-index:2;">Roll</th>
+    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:150px;position:sticky;left:40px;background:#1e3a5f;z-index:2;">Name</th>`;
+  subjects.forEach(subj => {
+    const total = subj.parts.reduce((a,p) => a+p.max, 0);
+    h1 += `<th colspan="${subj.parts.length + 1}" style="padding:6px 8px;border:1px solid #2d5a8e;text-align:center;">${subj.name}<br><small style="font-weight:normal;opacity:0.85">/${total}</small></th>`;
+  });
+  h1 += '</tr>';
+
+  let h2 = '<tr style="background:#2d5080;color:#fff;">';
+  subjects.forEach(subj => {
+    subj.parts.forEach(p => {
+      h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;">${p.label}<br><small>/${p.max}</small></th>`;
     });
+    h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;background:#1a3a5f;">Total</th>`;
   });
-  html += '</tbody></table></div></div>';
+  h2 += '</tr>';
+
+  // Build student rows
+  let bodyHtml = '';
+  students.forEach((st, si) => {
+    const rowBg = si % 2 === 0 ? '#fff' : '#f7fafc';
+    bodyHtml += `<tr style="background:${rowBg}">
+      <td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:700;text-align:center;position:sticky;left:0;background:inherit;">${st.roll_no||''}</td>
+      <td style="padding:4px 10px;border:1px solid #e2e8f0;font-weight:600;position:sticky;left:40px;background:inherit;">${st.name}</td>`;
+
+    subjects.forEach(subj => {
+      const ex = st.subjects[subj.name] || {};
+      let subjTotal = 0;
+      subj.parts.forEach((p, pi) => {
+        const val = ex[`part${pi+1}_marks`] || '';
+        if (val !== '') subjTotal += parseFloat(val) || 0;
+        bodyHtml += `<td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;">${val || '—'}</td>`;
+      });
+      bodyHtml += `<td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;background:#edf2f7;"><strong>${ex.obtained_marks || (subjTotal||'—')}</strong></td>`;
+    });
+    bodyHtml += '</tr>';
+  });
+
+  let html = `<div class="card" style="padding:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+      <h2 style="margin:0;border:none;padding:0;">Unit Test Marks (Std ${cls}) — ${test} — ${year}</h2>
+      <button class="btn-save" onclick="window.print()">🖨️ Print</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="border-collapse:collapse;font-size:12px;white-space:nowrap;">
+        <thead>${h1}${h2}</thead>
+        <tbody>${bodyHtml}</tbody>
+      </table>
+    </div>
+  </div>`;
   out.innerHTML = html;
 }
 
