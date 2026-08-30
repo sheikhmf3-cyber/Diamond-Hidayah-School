@@ -75,6 +75,12 @@
   .ut-student-row td { vertical-align:middle; }
   .ut-marks-input { width:60px !important; text-align:center; }
 
+  /* Sticky table header while scrolling students (desktop) */
+  #ut-thead tr:first-child th { position:sticky; top:0; z-index:5; }
+  #ut-thead tr:nth-child(2) th { position:sticky; top:37px; z-index:5; }
+  #ut-thead tr:first-child th:first-child,
+  #ut-thead tr:first-child th:nth-child(2) { z-index:6; }
+
   @media(max-width:600px) {
     .form-row { flex-direction:column; }
     .content { padding:12px; }
@@ -385,8 +391,8 @@
           </div>
           <div id="ut-alert"></div>
           <div class="scroll-hint">👉 Swipe left/right to see all subjects. Roll & Name stay visible.</div>
-          <div id="ut-desktop-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-            <table id="ut-main-table" style="border-collapse:collapse;font-size:12px;white-space:nowrap;">
+          <div id="ut-desktop-table-wrap" style="overflow:auto;-webkit-overflow-scrolling:touch;max-height:75vh;border:1px solid #e2e8f0;border-radius:8px;">
+            <table id="ut-main-table" style="border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%;">
               <thead id="ut-thead"></thead>
               <tbody id="ut-bulk-tbody"></tbody>
             </table>
@@ -900,6 +906,17 @@ async function loadUtStudents() {
   document.getElementById('ut-load-status').textContent = `✓ ${students.length} students loaded — ${utSubjects.length} subjects.`;
   document.getElementById('ut-bulk-area').style.display = '';
   document.getElementById('ut-alert').innerHTML = '';
+
+  // Fix sticky header row 2 top-offset to match actual rendered height of row 1
+  setTimeout(() => {
+    const thead = document.getElementById('ut-thead');
+    const row1 = thead.querySelector('tr:first-child');
+    const row2 = thead.querySelector('tr:nth-child(2)');
+    if (row1 && row2) {
+      const h = row1.getBoundingClientRect().height;
+      row2.querySelectorAll('th').forEach(th => { th.style.top = h + 'px'; });
+    }
+  }, 50);
 }
 
 function utMobileClampAndTotal(input) {
