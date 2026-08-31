@@ -831,6 +831,7 @@ async function loadUtStudents() {
     const total = subj.parts.reduce((a,p) => a+p.max, 0);
     h1 += `<th colspan="${subj.parts.length + 1}" style="padding:6px 8px;border:1px solid #2d5a8e;text-align:center;background:#1e3a5f;color:#fff;">${subj.name}<br><small style="font-weight:normal;opacity:0.85">/${total}</small></th>`;
   });
+  h1 += `<th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:120px;background:#1e3a5f;color:#fff;">Actions</th>`;
   h1 += '</tr>';
 
   // ── Header row 2: part labels + Total per subject ──
@@ -879,6 +880,11 @@ async function loadUtStudents() {
       </td>`;
     });
 
+    tds += `<td style="padding:4px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
+      <button onclick="saveOneStudentUT('${s.id}')" style="background:#1e3a5f;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;margin-right:4px;">💾 Save</button>
+      <button onclick="clearOneStudentUT('${s.id}')" style="background:#fff;color:#e53e3e;border:1px solid #e53e3e;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;">✕ Clear</button>
+    </td>`;
+
     tr.innerHTML = tds;
     tbody.appendChild(tr);
   });
@@ -924,6 +930,10 @@ async function loadUtStudents() {
         <span class="ut-name-value">${s.name}</span>
       </div>
       ${subjectsHtml}
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="saveOneStudentUT('${s.id}')" style="flex:1;background:#1e3a5f;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">💾 Save</button>
+        <button onclick="clearOneStudentUT('${s.id}')" style="flex:1;background:#fff;color:#e53e3e;border:1px solid #e53e3e;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">✕ Clear</button>
+      </div>
     `;
     mobileContainer.appendChild(card);
   });
@@ -970,6 +980,69 @@ function utClampAndTotal(input) {
   subjInputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
   const totalCell = tr.querySelector(`.ut-subj-total[data-subj="${subjName}"]`);
   if (totalCell) totalCell.textContent = total || '';
+}
+
+async function saveOneStudentUT(studentId) {
+  const test = document.getElementById('ut-test').value;
+  const year = document.getElementById('ut-year').value;
+  if (!test) { alert('Please select test name first.'); return; }
+
+  const isMobile = window.innerWidth <= 640;
+  const entries = [];
+
+  if (isMobile) {
+    const card = document.querySelector(`.ut-mobile-card[data-student-id="${studentId}"]`);
+    if (!card) return;
+    utSubjects.forEach(subj => {
+      const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
+      subj.parts.forEach((p, pi) => {
+        const inp = card.querySelector(`input[data-subj-m="${subj.name}"][data-part-m="${pi+1}"]`);
+        entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
+      });
+      entries.push(entry);
+    });
+  } else {
+    const tr = document.querySelector(`#ut-bulk-tbody tr[data-student-id="${studentId}"]`);
+    if (!tr) return;
+    utSubjects.forEach(subj => {
+      const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
+      subj.parts.forEach((p, pi) => {
+        const inp = tr.querySelector(`input[data-subj="${subj.name}"][data-part="${pi+1}"]`);
+        entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
+      });
+      entries.push(entry);
+    });
+  }
+
+  try {
+    const r = await fetch('/api/unittests/bulk', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ entries })
+    });
+    const d = await r.json();
+    if (r.ok) showAlert('ut-alert', `✅ Saved marks for this student. Will sync to local system within 2 minutes.`, 'success');
+    else showAlert('ut-alert', d.error || 'Save failed.', 'error');
+  } catch(e) { showAlert('ut-alert','Network error.','error'); }
+}
+
+function clearOneStudentUT(studentId) {
+  if (!confirm('Clear all marks for this student on screen? (Not saved until you click Save)')) return;
+
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile) {
+    const card = document.querySelector(`.ut-mobile-card[data-student-id="${studentId}"]`);
+    if (card) {
+      card.querySelectorAll('input').forEach(inp => { inp.value = ''; });
+      card.querySelectorAll('.ut-mobile-subj-total').forEach(el => { el.textContent = '0'; });
+    }
+  } else {
+    const tr = document.querySelector(`#ut-bulk-tbody tr[data-student-id="${studentId}"]`);
+    if (tr) {
+      tr.querySelectorAll('input').forEach(inp => { inp.value = ''; });
+      tr.querySelectorAll('.ut-subj-total').forEach(el => { el.textContent = ''; });
+    }
+  }
 }
 
 async function saveUnitTests() {
