@@ -79,122 +79,6 @@ async function pushUsers() {
   }
 }
 
-// ── Push local report cards → Supabase ───────────────────────────────────────
-async function pushReportCards() {
-  const cards = query(`SELECT rc.*, s.school, s.class_name FROM report_cards rc
-    JOIN students s ON s.id = rc.student_id`, []);
-  if (!cards.length) return;
-
-  for (const card of cards) {
-    const marks = query('SELECT * FROM report_card_marks WHERE report_card_id=?', [card.id]);
-    const cardData = {
-      local_id: card.id,
-      student_id: card.student_id,
-      term: card.term,
-      academic_year: card.academic_year || '2025-26',
-      attendance_present: card.attendance_present || 0,
-      attendance_total: card.attendance_total || 0,
-      conduct: card.conduct || '',
-      remarks: card.remarks || '',
-      activity: card.activity || '',
-      arts: card.arts || '',
-      communication: card.communication || '',
-      discipline: card.discipline || '',
-      homework: card.homework || '',
-      participation: card.participation || '',
-      respect: card.respect || '',
-      teamwork: card.teamwork || '',
-      punctuality: card.punctuality || '',
-      improvement: card.improvement || '',
-      daily_activity: card.daily_activity || '',
-      created_by: card.created_by,
-      synced_at: new Date().toISOString()
-    };
-
-    const { data: upserted, error } = await supabase
-      .from('cloud_report_cards')
-      .upsert(cardData, { onConflict: 'local_id' })
-      .select('id').single();
-
-    if (error) { console.error('[SYNC] Push report card error:', error.message); continue; }
-
-    // Push marks
-    if (upserted && marks.length) {
-      await supabase.from('cloud_report_card_marks').delete().eq('cloud_report_card_id', upserted.id);
-      await supabase.from('cloud_report_card_marks').insert(
-        marks.map(m => ({
-          cloud_report_card_id: upserted.id,
-          subject: m.subject,
-          marks_obtained: m.marks_obtained,
-          marks_total: m.marks_total
-        }))
-      );
-    }
-  }
-  console.log(`[SYNC] Pushed ${cards.length} report cards to cloud.`);
-}
-
-// ── Push local diary entries → Supabase ───────────────────────────────────────
-async function pushDiaryEntries() {
-  const entries = query('SELECT * FROM daily_diary', []);
-  if (!entries.length) return;
-
-  const rows = entries.map(e => ({
-    local_id: e.id,
-    student_id: e.student_id,
-    entry_date: e.entry_date,
-    activity: e.activity || '',
-    behaviour: e.behaviour || '',
-    homework: e.homework || '',
-    classwork: e.classwork || '',
-    remarks: e.remarks || '',
-    recorded_by: e.recorded_by,
-    synced_at: new Date().toISOString()
-  }));
-
-  // Batch upsert in chunks of 100
-  for (let i = 0; i < rows.length; i += 100) {
-    const chunk = rows.slice(i, i + 100);
-    const { error } = await supabase
-      .from('cloud_daily_diary')
-      .upsert(chunk, { onConflict: 'local_id' });
-    if (error) console.error('[SYNC] Push diary chunk error:', error.message);
-  }
-  console.log(`[SYNC] Pushed ${rows.length} diary entries to cloud.`);
-}
-
-// ── Push local unit test marks → Supabase ─────────────────────────────────────
-async function pushUnitTests() {
-  const marks = query('SELECT * FROM unit_test_marks', []);
-  if (!marks.length) return;
-
-  const rows = marks.map(m => ({
-    local_id: m.id,
-    student_id: m.student_id,
-    academic_year: m.academic_year || '2025-26',
-    test_name: m.test_name,
-    subject: m.subject,
-    total_marks: m.total_marks || '',
-    obtained_marks: m.obtained_marks || '',
-    part1_marks: m.part1_marks || '',
-    part2_marks: m.part2_marks || '',
-    part3_marks: m.part3_marks || '',
-    part4_marks: m.part4_marks || '',
-    part5_marks: m.part5_marks || '',
-    recorded_by: m.created_by,
-    synced_at: new Date().toISOString()
-  }));
-
-  for (let i = 0; i < rows.length; i += 100) {
-    const chunk = rows.slice(i, i + 100);
-    const { error } = await supabase
-      .from('cloud_unit_test_marks')
-      .upsert(chunk, { onConflict: 'local_id' });
-    if (error) console.error('[SYNC] Push unit test chunk error:', error.message);
-  }
-  console.log(`[SYNC] Pushed ${rows.length} unit test marks to cloud.`);
-}
-
 // ── Pull cloud report cards → local ───────────────────────────────────────────
 async function pullReportCards() {
   // Fetch all unsynced report cards
@@ -403,25 +287,17 @@ async function start() {
   await pushStudents();
   await pushUsers();
 
-  console.log('\n[SYNC] Pushing local academic data to cloud...');
-  await pushReportCards();
-  await pushDiaryEntries();
-  await pushUnitTests();
-
   // First sync immediately
   await syncCycle();
 
   // Then every 2 minutes
   setInterval(syncCycle, SYNC_INTERVAL_MS);
 
-  // Re-push students/users every 30 minutes
+  // Re-push students/users every 30 minutes (catches new admissions/staff)
   setInterval(async () => {
-    console.log('\n[SYNC] Refreshing all data in cloud...');
+    console.log('\n[SYNC] Refreshing students and users in cloud...');
     await pushStudents();
     await pushUsers();
-    await pushReportCards();
-    await pushDiaryEntries();
-    await pushUnitTests();
   }, 30 * 60 * 1000);
 }
 

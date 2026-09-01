@@ -88,10 +88,9 @@ router.get('/', async (req, res) => {
   if (school) rows = rows.filter(r => r.cloud_students?.school === school);
   if (class_name) rows = rows.filter(r => r.cloud_students?.class_name === class_name);
 
-  // Flatten — convert student_id to string for consistent frontend lookup
+  // Flatten
   const flat = rows.map(r => ({
     ...r,
-    student_id: String(r.student_id),
     student_name: r.cloud_students?.name,
     roll_no: r.cloud_students?.roll_no,
     class_name: r.cloud_students?.class_name,
@@ -173,6 +172,50 @@ router.post('/bulk', async (req, res) => {
   }
 
   res.json({ ok: true, saved, skipped });
+});
+
+// GET /api/unittests/remarks — list saved remarks for a class's test+report-type
+router.get('/remarks', async (req, res) => {
+  const { school, class_name, academic_year, test_name, report_type } = req.query;
+  if (!academic_year || !test_name || !report_type) return res.status(400).json({ error: 'academic_year, test_name and report_type required.' });
+
+  const { data: remarks, error } = await supabase
+    .from('cloud_unit_test_remarks')
+    .select('*, cloud_students(school, class_name)')
+    .eq('academic_year', academic_year)
+    .eq('test_name', test_name)
+    .eq('report_type', report_type);
+  if (error) return res.status(500).json({ error: error.message });
+
+  let rows = remarks || [];
+  if (school) rows = rows.filter(r => r.cloud_students?.school === school);
+  if (class_name) rows = rows.filter(r => r.cloud_students?.class_name === class_name);
+  res.json(rows.map(r => ({ student_id: r.student_id, remarks: r.remarks })));
+});
+
+// POST /api/unittests/remarks — save (create or update) one student's remark
+router.post('/remarks', async (req, res) => {
+  const { student_id, academic_year, test_name, report_type, remarks } = req.body;
+  if (!student_id || !academic_year || !test_name || !report_type)
+    return res.status(400).json({ error: 'student_id, academic_year, test_name and report_type required.' });
+
+  const user = req.session.user;
+  if (user.role !== 'admin') {
+    const { data: student } = await supabase.from('cloud_students').select('school,class_name').eq('id', student_id).single();
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+    const allowed = user.classes.some(c => c.school === student.school && c.class_name === student.class_name);
+    if (!allowed) return res.status(403).json({ error: "Not authorized for this student's class." });
+  }
+
+  const { error } = await supabase
+    .from('cloud_unit_test_remarks')
+    .upsert({
+      student_id, academic_year, test_name, report_type,
+      remarks: remarks || '', recorded_by: user.id, updated_at: new Date().toISOString()
+    }, { onConflict: 'student_id,academic_year,test_name,report_type' });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 module.exports = router;

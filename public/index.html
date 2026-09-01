@@ -75,104 +75,10 @@
   .ut-student-row td { vertical-align:middle; }
   .ut-marks-input { width:60px !important; text-align:center; }
 
-  /* Sticky table header while scrolling students (desktop) */
-  #ut-main-table thead { position:sticky; top:0; z-index:5; }
-  #ut-main-table thead tr th { background-clip:padding-box; }
-
   @media(max-width:600px) {
     .form-row { flex-direction:column; }
-    .content { padding:12px; }
-    .topbar h1 { font-size:13px; }
-    .topbar { padding:0 12px; }
-    .tabs { padding:0 8px; }
-    .tab { padding:12px 12px; font-size:12px; }
-    .card { padding:14px; }
-
-    /* Unit test table: bigger touch targets on mobile */
-    #ut-main-table input, #ut-bulk-area input {
-      width:44px !important;
-      height:38px;
-      font-size:14px !important;
-      padding:2px !important;
-    }
-    #ut-thead th { font-size:9px !important; padding:4px 3px !important; }
-    #ut-bulk-tbody td { padding:3px 2px !important; }
-
-    /* Sticky columns narrower on mobile */
-    #ut-thead th:first-child, #ut-bulk-tbody td:first-child { min-width:30px !important; left:0; }
-    #ut-thead th:nth-child(2), #ut-bulk-tbody td:nth-child(2) { min-width:100px !important; left:30px; font-size:11px; }
-
-    /* Scroll hint */
-    .scroll-hint {
-      display:block; text-align:center; font-size:12px; color:#2d6a9f;
-      background:#ebf8ff; padding:8px; border-radius:6px; margin-bottom:10px;
-    }
-
-    /* Bulk diary table on mobile */
-    .bulk-table input { min-width:80px; font-size:13px !important; padding:6px !important; }
-    .bulk-table th, .bulk-table td { padding:4px 3px !important; font-size:11px !important; }
-
-    /* Buttons full width on mobile for easier tapping */
-    .btn-save { width:100%; padding:12px; font-size:15px; }
-    #ut-bulk-area .btn-save, #diary-bulk-area .btn-save { position:sticky; bottom:0; z-index:10; }
-  }
-
-  @media(min-width:601px) {
-    .scroll-hint { display:none; }
-  }
-
-  /* ── Print styles: show ONLY the report output, clean black & white ── */
-  @media print {
-    body * { visibility:hidden; }
-    #print-header, #print-header * { visibility:visible; }
-    #print-header { display:block !important; position:absolute; left:0; top:0; width:100%; }
-    #rpt-output, #rpt-output * { visibility:visible; }
-    #rpt-output { position:absolute; left:0; top:90px; width:100%; }
-    #rpt-output .btn-save { display:none !important; }
-    #rpt-output .card {
-      box-shadow:none !important; border:none !important; padding:0 !important;
-    }
-    #rpt-output table { font-size:11px !important; }
-    #rpt-output table th { background:#1e3a5f !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    #rpt-output h2 { color:#000 !important; font-size:16px !important; }
-    .topbar, .tabs { display:none !important; }
-    @page { margin:1cm; size:landscape; }
-  }
-
-  /* ── Mobile card-style unit test layout ── */
-  .ut-mobile-card {
-    display:none;
-    background:#fff; border:1px solid #e2e8f0; border-radius:10px;
-    padding:16px; margin-bottom:14px;
-  }
-  .ut-mobile-card .ut-card-header {
-    display:flex; gap:12px; align-items:baseline; margin-bottom:14px;
-    padding-bottom:10px; border-bottom:1px solid #e2e8f0;
-  }
-  .ut-mobile-card .ut-roll-label { font-size:12px; color:#718096; font-weight:600; text-transform:uppercase; }
-  .ut-mobile-card .ut-roll-value { font-size:16px; font-weight:700; margin-right:16px; }
-  .ut-mobile-card .ut-name-value { font-size:16px; font-weight:700; color:#1e3a5f; }
-  .ut-mobile-subject { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid #f0f4f8; }
-  .ut-mobile-subject:last-child { border-bottom:none; }
-  .ut-mobile-subject-name { flex:0 0 90px; font-weight:700; font-size:14px; color:#1e3a5f; }
-  .ut-mobile-parts { flex:1; display:flex; flex-direction:column; gap:8px; align-items:flex-end; margin-right:12px; }
-  .ut-mobile-part-row { display:flex; align-items:center; gap:10px; width:100%; justify-content:flex-end; }
-  .ut-mobile-part-label { font-size:11px; color:#718096; font-weight:600; text-transform:uppercase; min-width:55px; text-align:right; }
-  .ut-mobile-part-row input {
-    width:70px; padding:10px; border:1px solid #cbd5e0; border-radius:8px;
-    font-size:16px; text-align:center;
-  }
-  .ut-mobile-part-row input:focus { outline:none; border-color:#2d6a9f; box-shadow:0 0 0 3px rgba(45,106,159,0.12); }
-  .ut-mobile-total { flex:0 0 70px; text-align:right; }
-  .ut-mobile-total-label { font-size:10px; color:#718096; }
-  .ut-mobile-total-value { font-size:16px; font-weight:700; color:#1e3a5f; }
-
-  @media(max-width:640px) {
-    #ut-desktop-table-wrap { display:none !important; }
-    .ut-mobile-card { display:block; }
-  }
-  @media(min-width:641px) {
-    .ut-mobile-card { display:none !important; }
+    .content { padding:16px; }
+    .topbar h1 { font-size:14px; }
   }
 </style>
 </head>
@@ -192,14 +98,6 @@
   </div>
 </div>
 
-<!-- Print-only header (hidden on screen, shown when printing) -->
-<div id="print-header" style="display:none;">
-  <div style="text-align:center;margin-bottom:16px;border-bottom:2px solid #1e3a5f;padding-bottom:10px;">
-    <h1 style="font-size:20px;color:#1e3a5f;margin:0;">Diamond / Hidayah School</h1>
-    <p style="font-size:12px;color:#555;margin:4px 0 0;" id="print-date"></p>
-  </div>
-</div>
-
 <!-- APP -->
 <div id="app-page">
   <div class="topbar">
@@ -214,7 +112,7 @@
     <div class="tab active" onclick="switchTab('reportcard')">📋 Report Cards</div>
     <div class="tab" onclick="switchTab('diary')">📖 Daily Diary</div>
     <div class="tab" onclick="switchTab('unittest')">✏️ Unit Tests</div>
-    <div class="tab" onclick="switchTab('reports')">📊 Reports</div>
+    <div class="tab" onclick="switchTab('utreport')">📊 Unit Test Report</div>
   </div>
 
   <div class="content">
@@ -340,8 +238,7 @@
         <div class="card">
           <h2>Daily Diary — Bulk Entry (Whole Class)</h2>
           <div id="diary-alert"></div>
-          <div class="scroll-hint">👉 Swipe left/right to see all columns.</div>
-          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <div style="overflow-x:auto;">
             <table class="bulk-table" id="diary-bulk-table">
               <thead>
                 <tr>
@@ -366,11 +263,8 @@
     <!-- ═══════════════════════════════ UNIT TEST TAB ═══════════════════════════════ -->
     <div id="tab-unittest" style="display:none;">
       <div class="card">
-        <h2>✏️ Unit Test Marks (Std 1st–10th)</h2>
-        <p style="font-size:13px;color:#718096;margin-bottom:16px;">
-          Bulk entry for all subjects. Writing/Oral components shown per class format. Total calculated automatically.
-        </p>
-        <div class="form-row" style="align-items:flex-end;">
+        <h2>Select Class & Test</h2>
+        <div class="form-row">
           <div class="form-group">
             <label>School</label>
             <select id="ut-school" onchange="loadUtClasses()">
@@ -379,8 +273,27 @@
           </div>
           <div class="form-group">
             <label>Class</label>
-            <select id="ut-class">
+            <select id="ut-class" onchange="loadUtSubjects()">
               <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Test Name</label>
+            <select id="ut-test" onchange="loadUtStudents()">
+              <option value="">— Select Test —</option>
+              <option>Unit Test 1</option>
+              <option>Unit Test 2</option>
+              <option>Unit Test 3</option>
+              <option>Unit Test 4</option>
+              <option>Half Yearly</option>
+              <option>Annual</option>
+              <option>Preliminary</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select id="ut-subject" onchange="loadUtStudents()">
+              <option value="">— Select Subject —</option>
             </select>
           </div>
           <div class="form-group">
@@ -391,112 +304,76 @@
               <option>2024-25</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Test Name</label>
-            <select id="ut-test">
-              <option value="">— Select Test —</option>
-              <option>Unit Test 1</option>
-              <option>Unit Test 2</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex:0 0 auto;">
-            <label>&nbsp;</label>
-            <button class="btn-save" onclick="loadUtStudents()" style="white-space:nowrap;">🔄 Load Class</button>
-          </div>
         </div>
         <div id="ut-load-status" style="font-size:13px;color:#718096;"></div>
       </div>
 
       <div id="ut-bulk-area" style="display:none;">
-        <div class="card" style="padding:16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
-            <h2 id="ut-bulk-title" style="margin:0;border:none;padding:0;">Unit Test Marks</h2>
-            <button class="btn-save" id="ut-save-btn" onclick="saveUnitTests()">💾 Save All</button>
-          </div>
+        <div class="card">
+          <h2 id="ut-bulk-title">Unit Test Marks Entry</h2>
           <div id="ut-alert"></div>
-          <div class="scroll-hint">👉 Swipe left/right to see all subjects. Roll & Name stay visible.</div>
-          <div id="ut-desktop-table-wrap" style="overflow:auto;-webkit-overflow-scrolling:touch;max-height:75vh;border:1px solid #e2e8f0;border-radius:8px;">
-            <table id="ut-main-table" style="border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%;">
-              <thead id="ut-thead"></thead>
+          <div style="overflow-x:auto;">
+            <table class="bulk-table">
+              <thead></thead>
               <tbody id="ut-bulk-tbody"></tbody>
             </table>
           </div>
-          <div id="ut-mobile-cards"></div>
+          <br>
+          <button class="btn-save" id="ut-save-btn" onclick="saveUnitTests()">💾 Save All Marks</button>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════ REPORTS TAB ═══════════════════════════════ -->
-    <div id="tab-reports" style="display:none;">
-
-      <!-- Filter bar -->
+    <!-- ═══════════════════════════════ UNIT TEST REPORT TAB ═══════════════════════════════ -->
+    <div id="tab-utreport" style="display:none;">
       <div class="card">
-        <h2>📊 Reports & View</h2>
-        <div class="form-row" style="align-items:flex-end;">
-          <div class="form-group">
-            <label>Report Type</label>
-            <select id="rpt-type" onchange="onReportTypeChange()">
-              <option value="">— Select Report —</option>
-              <option value="reportcard">Report Card</option>
-              <option value="unittest">Unit Test Marks</option>
-              <option value="diary">Daily Diary</option>
-            </select>
-          </div>
+        <h2>Select Class & Test</h2>
+        <div class="form-row">
           <div class="form-group">
             <label>School</label>
-            <select id="rpt-school" onchange="loadRptClasses()">
+            <select id="utr-school" onchange="loadUtrClasses()">
               <option value="">— Select School —</option>
             </select>
           </div>
           <div class="form-group">
             <label>Class</label>
-            <select id="rpt-class" onchange="onRptClassChange()">
+            <select id="utr-class">
               <option value="">— Select Class —</option>
             </select>
           </div>
-          <div class="form-group" id="rpt-student-group">
-            <label>Student</label>
-            <select id="rpt-student">
-              <option value="">— All Students —</option>
-            </select>
-          </div>
-          <div class="form-group" id="rpt-term-group" style="display:none;">
-            <label>Term</label>
-            <select id="rpt-term">
-              <option value="">— All Terms —</option>
-              <option>Term 1</option><option>Term 2</option><option>Term 3</option>
-              <option>Preliminary</option><option>Annual</option>
-              <option>FA1</option><option>FA2</option><option>FA3</option><option>FA4</option>
-              <option>SA1</option><option>SA2</option>
-            </select>
-          </div>
-          <div class="form-group" id="rpt-test-group" style="display:none;">
-            <label>Test</label>
-            <select id="rpt-test">
-              <option value="">— All Tests —</option>
+          <div class="form-group">
+            <label>Test Name</label>
+            <select id="utr-test">
               <option>Unit Test 1</option>
               <option>Unit Test 2</option>
+              <option>Unit Test 3</option>
+              <option>Unit Test 4</option>
+              <option>Half Yearly</option>
+              <option>Annual</option>
+              <option>Preliminary</option>
             </select>
-          </div>
-          <div class="form-group" id="rpt-date-group" style="display:none;">
-            <label>Date</label>
-            <input type="date" id="rpt-date">
           </div>
           <div class="form-group">
-            <label>Year</label>
-            <select id="rpt-year">
-              <option>2026-27</option><option>2025-26</option><option>2024-25</option>
+            <label>Academic Year</label>
+            <select id="utr-year">
+              <option>2026-27</option>
+              <option>2025-26</option>
+              <option>2024-25</option>
             </select>
           </div>
-          <div class="form-group" style="flex:0 0 auto;">
-            <label>&nbsp;</label>
-            <button class="btn-save" onclick="loadReport()">🔍 Load</button>
+          <div class="form-group">
+            <label>Report</label>
+            <select id="utr-report-type">
+              <option value="academic">📘 Academic Report</option>
+              <option value="islamic">🕌 Islamic Report</option>
+            </select>
           </div>
         </div>
+        <button class="btn-save" onclick="loadUtReport()">🔄 Load Report</button>
+        <button class="btn-add-subject" onclick="printUtReport()">🖨️ Print</button>
       </div>
 
-      <!-- Report output -->
-      <div id="rpt-output"></div>
+      <div id="utr-area"></div>
     </div>
 
   </div>
@@ -542,14 +419,6 @@ async function showApp() {
   document.getElementById('user-name-display').textContent = currentUser.name + ' (' + currentUser.role + ')';
   await loadAllClasses();
   populateSchoolDropdowns();
-  // Also populate reports school dropdown
-  const schools = [...new Set(allClasses.map(c => c.school))];
-  ['rpt-school'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    sel.innerHTML = '<option value="">— Select School —</option>';
-    schools.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
-  });
 }
 
 async function loadAllClasses() {
@@ -559,7 +428,7 @@ async function loadAllClasses() {
 
 function populateSchoolDropdowns() {
   const schools = [...new Set(allClasses.map(c => c.school))];
-  ['rc-school','d-school','ut-school'].forEach(id => {
+  ['rc-school','d-school','ut-school','utr-school'].forEach(id => {
     const sel = document.getElementById(id);
     sel.innerHTML = '<option value="">— Select School —</option>';
     schools.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
@@ -568,7 +437,7 @@ function populateSchoolDropdowns() {
 
 // ── Tabs ──────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['reportcard','diary','unittest','reports'];
+  const tabs = ['reportcard','diary','unittest','utreport'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   tabs.forEach(t => { document.getElementById('tab-'+t).style.display = t===name ? '' : 'none'; });
 }
@@ -721,12 +590,12 @@ async function loadDiaryStudents() {
   const dr = await fetch(`/api/diary?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}&date=${date}`);
   const existing = dr.ok ? await dr.json() : [];
   const existingMap = {};
-  existing.forEach(e => { existingMap[String(e.student_id)] = e; });
+  existing.forEach(e => { existingMap[e.student_id] = e; });
 
   const tbody = document.getElementById('diary-bulk-tbody');
   tbody.innerHTML = '';
   students.forEach(s => {
-    const ex = existingMap[String(s.id)] || {};
+    const ex = existingMap[s.id] || {};
     const tr = document.createElement('tr');
     tr.dataset.studentId = s.id;
     tr.innerHTML = `
@@ -767,8 +636,8 @@ async function saveBulkDiary() {
   btn.disabled = false; btn.textContent = '💾 Save All Entries';
 }
 
-// ── Unit Tests (all subjects, local format) ───────────────────
-let utSubjects = []; // full subject+parts config for current class
+// ── Unit Tests ────────────────────────────────────────────────
+let utSubjectConfig = []; // parts config for current class+subject
 
 function loadUtClasses() {
   const school = document.getElementById('ut-school').value;
@@ -776,6 +645,25 @@ function loadUtClasses() {
   const sel = document.getElementById('ut-class');
   sel.innerHTML = '<option value="">— Select Class —</option>';
   classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
+  document.getElementById('ut-subject').innerHTML = '<option value="">— Select Subject —</option>';
+  document.getElementById('ut-bulk-area').style.display = 'none';
+}
+
+async function loadUtSubjects() {
+  const cls = document.getElementById('ut-class').value;
+  if (!cls) return;
+  // Load subject list for this class from server
+  const r = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
+  const data = r.ok ? await r.json() : { subjects: [] };
+  const sel = document.getElementById('ut-subject');
+  sel.innerHTML = '<option value="">— Select Subject —</option>';
+  (data.subjects || []).forEach(s => {
+    const total = s.parts.reduce((a,p) => a+p.max, 0);
+    const o = document.createElement('option');
+    o.value = s.name;
+    o.textContent = `${s.name} (Total: ${total})`;
+    sel.appendChild(o);
+  });
   document.getElementById('ut-bulk-area').style.display = 'none';
 }
 
@@ -783,572 +671,317 @@ async function loadUtStudents() {
   const school = document.getElementById('ut-school').value;
   const cls = document.getElementById('ut-class').value;
   const test = document.getElementById('ut-test').value;
+  const subject = document.getElementById('ut-subject').value;
   const year = document.getElementById('ut-year').value;
-  if (!school || !cls || !test) {
-    document.getElementById('ut-load-status').textContent = 'Please select school, class and test.';
-    return;
-  }
+  if (!school || !cls || !test || !subject) return;
 
-  document.getElementById('ut-load-status').textContent = 'Loading...';
-  document.getElementById('ut-bulk-area').style.display = 'none';
+  document.getElementById('ut-load-status').textContent = 'Loading students...';
 
-  // Get subject+parts config for this class
+  // Get subject parts config
   const cr = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
   const cdata = cr.ok ? await cr.json() : { subjects: [] };
-  utSubjects = cdata.subjects || [];
+  const subjDef = (cdata.subjects || []).find(s => s.name === subject);
+  utSubjectConfig = subjDef ? subjDef.parts : [];
 
-  if (!utSubjects.length) {
-    document.getElementById('ut-load-status').textContent = 'No subject config found for this class.';
-    return;
-  }
-
-  // Get students
   const students = await fetchStudents(school, cls);
   if (!students.length) {
     document.getElementById('ut-load-status').textContent = 'No students found.';
+    document.getElementById('ut-bulk-area').style.display = 'none';
     return;
   }
 
-  // Get existing marks for this class+test+year
+  // Fetch existing marks
   const mr = await fetch(`/api/unittests?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}&test_name=${encodeURIComponent(test)}&academic_year=${year}`);
   const existing = mr.ok ? await mr.json() : [];
-  // existingMap[student_id][subject] = row
   const existingMap = {};
-  existing.forEach(e => {
-    const sid = String(e.student_id);
-    if (!existingMap[sid]) existingMap[sid] = {};
-    existingMap[sid][e.subject] = e;
-  });
+  existing.filter(e => e.subject === subject).forEach(e => { existingMap[e.student_id] = e; });
 
-  document.getElementById('ut-bulk-title').textContent = `${test} — ${cls} — ${year}`;
+  // Build table header dynamically based on parts
+  const totalMarks = utSubjectConfig.reduce((a,p) => a+p.max, 0);
+  document.getElementById('ut-bulk-title').textContent = `${test} — ${subject} (Total: ${totalMarks})`;
 
-  // ── Build header row 1: subject names spanning their parts ──
-  const thead = document.getElementById('ut-thead');
-  let h1 = `<tr>
-    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:40px;position:sticky;left:0;top:0;background:#1e3a5f;color:#fff;z-index:8;">Roll</th>
-    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:150px;position:sticky;left:40px;top:0;background:#1e3a5f;color:#fff;z-index:8;">Name</th>`;
-  utSubjects.forEach(subj => {
-    const total = subj.parts.reduce((a,p) => a+p.max, 0);
-    h1 += `<th colspan="${subj.parts.length + 1}" style="padding:6px 8px;border:1px solid #2d5a8e;text-align:center;background:#1e3a5f;color:#fff;">${subj.name}<br><small style="font-weight:normal;opacity:0.85">/${total}</small></th>`;
-  });
-  h1 += `<th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:120px;background:#1e3a5f;color:#fff;">Actions</th>`;
-  h1 += '</tr>';
+  // Build thead
+  const table = document.querySelector('#ut-bulk-area table');
+  let theadHtml = '<tr><th style="width:50px">Roll</th><th style="min-width:160px">Student</th>';
+  utSubjectConfig.forEach(p => { theadHtml += `<th style="min-width:90px">${p.label}<br><small>/${p.max}</small></th>`; });
+  theadHtml += '<th style="min-width:80px">Total</th></tr>';
+  table.querySelector('thead').innerHTML = theadHtml;
 
-  // ── Header row 2: part labels + Total per subject ──
-  let h2 = '<tr>';
-  utSubjects.forEach(subj => {
-    subj.parts.forEach(p => {
-      h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;background:#2d5080;color:#fff;">${p.label}<br><small>/${p.max}</small></th>`;
-    });
-    h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;background:#1a3a5f;color:#fff;">Total</th>`;
-  });
-  h2 += '</tr>';
-  thead.innerHTML = h1 + h2;
-
-  // ── Build student rows ──
-  // ── Build DESKTOP table ──
   const tbody = document.getElementById('ut-bulk-tbody');
   tbody.innerHTML = '';
-
-  students.forEach((s, si) => {
+  students.forEach(s => {
+    const ex = existingMap[s.id] || {};
     const tr = document.createElement('tr');
     tr.dataset.studentId = s.id;
-    tr.style.background = si % 2 === 0 ? '#fff' : '#f7fafc';
-
-    const rowBgColor = si % 2 === 0 ? '#fff' : '#f7fafc';
-    let tds = `
-      <td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:700;text-align:center;position:sticky;left:0;background:${rowBgColor};z-index:3;">${s.roll_no||''}</td>
-      <td style="padding:4px 10px;border:1px solid #e2e8f0;font-weight:600;position:sticky;left:40px;background:${rowBgColor};z-index:3;">${s.name}</td>
-    `;
-
-    utSubjects.forEach(subj => {
-      const ex = (existingMap[String(s.id)] && existingMap[String(s.id)][subj.name]) || {};
-      let subjTotal = 0;
-      subj.parts.forEach((p, pi) => {
-        const val = ex[`part${pi+1}_marks`] || '';
-        subjTotal += parseFloat(val) || 0;
-        tds += `<td style="padding:3px 4px;border:1px solid #e2e8f0;text-align:center;">
-          <input type="number" min="0" max="${p.max}"
-            data-subj="${subj.name}" data-part="${pi+1}" data-max="${p.max}"
-            value="${val}" placeholder="0"
-            oninput="utClampAndTotal(this)"
-            style="width:52px;padding:4px;border:1px solid #cbd5e0;border-radius:4px;text-align:center;font-size:13px;">
-        </td>`;
-      });
-      tds += `<td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;background:#edf2f7;">
-        <strong class="ut-subj-total" data-subj="${subj.name}">${subjTotal > 0 ? subjTotal : ''}</strong>
-      </td>`;
+    let tds = `<td style="font-weight:600">${s.roll_no||''}</td><td><strong>${s.name}</strong></td>`;
+    utSubjectConfig.forEach((p, i) => {
+      const val = ex[`part${i+1}_marks`] || '';
+      tds += `<td><input type="number" class="ut-marks-input" data-part="${p.key}" data-max="${p.max}" value="${val}" placeholder="0" min="0" max="${p.max}" oninput="updateUtTotal(this)"></td>`;
     });
-
-    tds += `<td style="padding:4px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
-      <button onclick="saveOneStudentUT('${s.id}')" style="background:#1e3a5f;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;margin-right:4px;">💾 Save</button>
-      <button onclick="clearOneStudentUT('${s.id}')" style="background:#fff;color:#e53e3e;border:1px solid #e53e3e;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;">✕ Clear</button>
-    </td>`;
-
+    // Total display
+    const obtained = ex.obtained_marks || '';
+    tds += `<td><strong class="ut-row-total">${obtained}</strong></td>`;
     tr.innerHTML = tds;
     tbody.appendChild(tr);
   });
 
-  // ── Build MOBILE cards (one card per student, subjects stacked vertically) ──
-  const mobileContainer = document.getElementById('ut-mobile-cards');
-  mobileContainer.innerHTML = '';
-
-  students.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'ut-mobile-card';
-    card.dataset.studentId = s.id;
-
-    let subjectsHtml = '';
-    utSubjects.forEach(subj => {
-      const ex = (existingMap[String(s.id)] && existingMap[String(s.id)][subj.name]) || {};
-      let subjTotal = 0;
-      let partsHtml = '';
-      subj.parts.forEach((p, pi) => {
-        const val = ex[`part${pi+1}_marks`] || '';
-        subjTotal += parseFloat(val) || 0;
-        partsHtml += `<div class="ut-mobile-part-row">
-          <span class="ut-mobile-part-label">${p.label}</span>
-          <input type="number" inputmode="numeric" min="0" max="${p.max}"
-            data-subj-m="${subj.name}" data-part-m="${pi+1}" data-max="${p.max}"
-            value="${val}" placeholder="0"
-            oninput="utMobileClampAndTotal(this)">
-        </div>`;
-      });
-      subjectsHtml += `<div class="ut-mobile-subject">
-        <div class="ut-mobile-subject-name">${subj.name}</div>
-        <div class="ut-mobile-parts">${partsHtml}</div>
-        <div class="ut-mobile-total">
-          <div class="ut-mobile-total-label">Total</div>
-          <div class="ut-mobile-total-value ut-mobile-subj-total" data-subj-total="${subj.name}">${subjTotal || 0}</div>
-        </div>
-      </div>`;
-    });
-
-    card.innerHTML = `
-      <div class="ut-card-header">
-        <span><span class="ut-roll-label">Roll</span> <span class="ut-roll-value">${s.roll_no||''}</span></span>
-        <span class="ut-name-value">${s.name}</span>
-      </div>
-      ${subjectsHtml}
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button onclick="saveOneStudentUT('${s.id}')" style="flex:1;background:#1e3a5f;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">💾 Save</button>
-        <button onclick="clearOneStudentUT('${s.id}')" style="flex:1;background:#fff;color:#e53e3e;border:1px solid #e53e3e;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">✕ Clear</button>
-      </div>
-    `;
-    mobileContainer.appendChild(card);
-  });
-
-  document.getElementById('ut-load-status').textContent = `✓ ${students.length} students loaded — ${utSubjects.length} subjects.`;
+  document.getElementById('ut-load-status').textContent = `${students.length} students loaded.`;
   document.getElementById('ut-bulk-area').style.display = '';
   document.getElementById('ut-alert').innerHTML = '';
 }
 
-function utMobileClampAndTotal(input) {
-  const max = parseFloat(input.dataset.max);
-  if (input.value !== '' && parseFloat(input.value) > max) input.value = max;
-  if (input.value !== '' && parseFloat(input.value) < 0) input.value = 0;
-
-  const subjName = input.dataset.subjM;
-  const card = input.closest('.ut-mobile-card');
-  const subjInputs = card.querySelectorAll(`input[data-subj-m="${subjName}"]`);
-  let total = 0;
-  subjInputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
-  const totalEl = card.querySelector(`.ut-mobile-subj-total[data-subj-total="${subjName}"]`);
-  if (totalEl) totalEl.textContent = total;
-
-  // Keep desktop table in sync too (in case user switches view)
-  const tr = document.querySelector(`#ut-bulk-tbody tr[data-student-id="${card.dataset.studentId}"]`);
-  if (tr) {
-    const deskInput = tr.querySelector(`input[data-subj="${subjName}"][data-part="${input.dataset.partM}"]`);
-    if (deskInput) deskInput.value = input.value;
-    const deskTotal = tr.querySelector(`.ut-subj-total[data-subj="${subjName}"]`);
-    if (deskTotal) deskTotal.textContent = total || '';
-  }
-}
-
-function utClampAndTotal(input) {
+function updateUtTotal(input) {
   // Clamp to max
-  const max = parseFloat(input.dataset.max);
-  if (input.value !== '' && parseFloat(input.value) > max) input.value = max;
-  if (input.value !== '' && parseFloat(input.value) < 0) input.value = 0;
-
-  // Recompute this subject's total in this row
-  const subjName = input.dataset.subj;
+  if (input.value !== '' && parseFloat(input.value) > parseFloat(input.dataset.max)) {
+    input.value = input.dataset.max;
+  }
+  // Recompute row total
   const tr = input.closest('tr');
-  const subjInputs = tr.querySelectorAll(`input[data-subj="${subjName}"]`);
+  const inputs = tr.querySelectorAll('.ut-marks-input');
   let total = 0;
-  subjInputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
-  const totalCell = tr.querySelector(`.ut-subj-total[data-subj="${subjName}"]`);
-  if (totalCell) totalCell.textContent = total || '';
-}
-
-async function saveOneStudentUT(studentId) {
-  const test = document.getElementById('ut-test').value;
-  const year = document.getElementById('ut-year').value;
-  if (!test) { alert('Please select test name first.'); return; }
-
-  const isMobile = window.innerWidth <= 640;
-  const entries = [];
-
-  if (isMobile) {
-    const card = document.querySelector(`.ut-mobile-card[data-student-id="${studentId}"]`);
-    if (!card) return;
-    utSubjects.forEach(subj => {
-      const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
-      subj.parts.forEach((p, pi) => {
-        const inp = card.querySelector(`input[data-subj-m="${subj.name}"][data-part-m="${pi+1}"]`);
-        entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
-      });
-      entries.push(entry);
-    });
-  } else {
-    const tr = document.querySelector(`#ut-bulk-tbody tr[data-student-id="${studentId}"]`);
-    if (!tr) return;
-    utSubjects.forEach(subj => {
-      const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
-      subj.parts.forEach((p, pi) => {
-        const inp = tr.querySelector(`input[data-subj="${subj.name}"][data-part="${pi+1}"]`);
-        entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
-      });
-      entries.push(entry);
-    });
-  }
-
-  try {
-    const r = await fetch('/api/unittests/bulk', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ entries })
-    });
-    const d = await r.json();
-    if (r.ok) showAlert('ut-alert', `✅ Saved marks for this student. Will sync to local system within 2 minutes.`, 'success');
-    else showAlert('ut-alert', d.error || 'Save failed.', 'error');
-  } catch(e) { showAlert('ut-alert','Network error.','error'); }
-}
-
-function clearOneStudentUT(studentId) {
-  if (!confirm('Clear all marks for this student on screen? (Not saved until you click Save)')) return;
-
-  const isMobile = window.innerWidth <= 640;
-  if (isMobile) {
-    const card = document.querySelector(`.ut-mobile-card[data-student-id="${studentId}"]`);
-    if (card) {
-      card.querySelectorAll('input').forEach(inp => { inp.value = ''; });
-      card.querySelectorAll('.ut-mobile-subj-total').forEach(el => { el.textContent = '0'; });
-    }
-  } else {
-    const tr = document.querySelector(`#ut-bulk-tbody tr[data-student-id="${studentId}"]`);
-    if (tr) {
-      tr.querySelectorAll('input').forEach(inp => { inp.value = ''; });
-      tr.querySelectorAll('.ut-subj-total').forEach(el => { el.textContent = ''; });
-    }
-  }
+  inputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
+  tr.querySelector('.ut-row-total').textContent = total;
 }
 
 async function saveUnitTests() {
   const test = document.getElementById('ut-test').value;
+  const subject = document.getElementById('ut-subject').value;
   const year = document.getElementById('ut-year').value;
-  if (!test) { showAlert('ut-alert','Please select test name.','error'); return; }
+  if (!test || !subject) { showAlert('ut-alert','Please select test and subject.','error'); return; }
 
-  // Determine which view is visible (mobile cards vs desktop table) and read from that
-  const isMobile = window.innerWidth <= 640;
   const entries = [];
-
-  if (isMobile) {
-    document.querySelectorAll('.ut-mobile-card').forEach(card => {
-      const studentId = card.dataset.studentId;
-      utSubjects.forEach(subj => {
-        const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
-        subj.parts.forEach((p, pi) => {
-          const inp = card.querySelector(`input[data-subj-m="${subj.name}"][data-part-m="${pi+1}"]`);
-          entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
-        });
-        entries.push(entry);
-      });
+  document.querySelectorAll('#ut-bulk-tbody tr').forEach(tr => {
+    const entry = {
+      student_id: tr.dataset.studentId,
+      academic_year: year,
+      test_name: test,
+      subject: subject
+    };
+    tr.querySelectorAll('.ut-marks-input').forEach((inp, i) => {
+      entry[`part${i+1}_marks`] = inp.value || '';
     });
-  } else {
-    document.querySelectorAll('#ut-bulk-tbody tr').forEach(tr => {
-      const studentId = tr.dataset.studentId;
-      utSubjects.forEach(subj => {
-        const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subj.name };
-        subj.parts.forEach((p, pi) => {
-          const inp = tr.querySelector(`input[data-subj="${subj.name}"][data-part="${pi+1}"]`);
-          entry[`part${pi+1}_marks`] = inp ? (inp.value || '') : '';
-        });
-        entries.push(entry);
-      });
-    });
-  }
+    entries.push(entry);
+  });
 
   const btn = document.getElementById('ut-save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const r = await fetch('/api/unittests/bulk', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ entries })
-    });
+    const r = await fetch('/api/unittests/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries }) });
     const d = await r.json();
-    if (r.ok) showAlert('ut-alert', `✅ Saved marks for ${d.saved} subject-rows. Will sync to local system within 2 minutes.`, 'success');
+    if (r.ok) showAlert('ut-alert', `✅ Saved ${d.saved} marks. Will sync to local system within 2 minutes.`, 'success');
     else showAlert('ut-alert', d.error || 'Save failed.', 'error');
   } catch(e) { showAlert('ut-alert','Network error.','error'); }
-  btn.disabled = false; btn.textContent = '💾 Save All';
+  btn.disabled = false; btn.textContent = '💾 Save All Marks';
 }
 
-// ── Reports ───────────────────────────────────────────────────
-function onReportTypeChange() {
-  const type = document.getElementById('rpt-type').value;
-  document.getElementById('rpt-term-group').style.display = type === 'reportcard' ? '' : 'none';
-  document.getElementById('rpt-test-group').style.display = type === 'unittest' ? '' : 'none';
-  document.getElementById('rpt-date-group').style.display = type === 'diary' ? '' : 'none';
-  document.getElementById('rpt-output').innerHTML = '';
+// ── Unit Test Report (classwise Academic / Islamic report, print) ──
+let utrCache = null; // { list, subjects, year, testName, school, cls, reportType, remarksMap }
+const UTR_ISLAMIC_NAMES = ['ISLAMIC', 'ARABIC WRITING', 'ARABIC ORAL'];
+const UTR_REPORT_LABELS = { academic: 'Academic Report', islamic: 'Islamic Report' };
+const UTR_REMARK_OPTIONS = ['Excellent', 'Very Good', 'Good', 'Satisfactory', 'Needs Improvement'];
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
-function loadRptClasses() {
-  const school = document.getElementById('rpt-school').value;
+// Standard 9-point grading scale (CBSE-style) applied to the percentage.
+function utrGrade(pct) {
+  const p = parseFloat(pct);
+  if (isNaN(p)) return '—';
+  if (p >= 91) return 'A1';
+  if (p >= 81) return 'A2';
+  if (p >= 71) return 'B1';
+  if (p >= 61) return 'B2';
+  if (p >= 51) return 'C1';
+  if (p >= 41) return 'C2';
+  if (p >= 33) return 'D';
+  if (p >= 21) return 'E1';
+  return 'E2';
+}
+function utrSubjectTotal(s) { return s.parts.reduce((a,p) => a + p.max, 0); }
+function utrMaxParts(subjects) { return Math.max(...subjects.map(s => s.parts.length)); }
+function utrRowLabel(subjects, rowIdx, maxParts) {
+  if (rowIdx === maxParts) {
+    const totals = subjects.map(s => utrSubjectTotal(s));
+    const sameTotal = totals.every(t => t === totals[0]);
+    return sameTotal ? `Total  ${totals[0]}` : 'Total';
+  }
+  const partsAtIdx = subjects.map(s => s.parts[rowIdx]).filter(Boolean);
+  if (!partsAtIdx.length) return '';
+  const sameLabel = partsAtIdx.every(p => p.label === partsAtIdx[0].label);
+  const sameMax = partsAtIdx.every(p => p.max === partsAtIdx[0].max);
+  const label = sameLabel ? partsAtIdx[0].label : `Part ${rowIdx+1}`;
+  return sameLabel && sameMax ? `${label}  ${partsAtIdx[0].max}` : label;
+}
+function utrRemarkOptionsHtml(selected) {
+  return `<option value="">— Select —</option>` +
+    UTR_REMARK_OPTIONS.map(o => `<option value="${escapeHtml(o)}" ${o===selected?'selected':''}>${escapeHtml(o)}</option>`).join('');
+}
+
+function loadUtrClasses() {
+  const school = document.getElementById('utr-school').value;
   const classes = getClassesForSchool(school);
-  const sel = document.getElementById('rpt-class');
+  const sel = document.getElementById('utr-class');
   sel.innerHTML = '<option value="">— Select Class —</option>';
   classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
-  document.getElementById('rpt-student').innerHTML = '<option value="">— All Students —</option>';
+  document.getElementById('utr-area').innerHTML = '';
 }
 
-async function onRptClassChange() {
-  const school = document.getElementById('rpt-school').value;
-  const cls = document.getElementById('rpt-class').value;
-  const students = await fetchStudents(school, cls);
-  const sel = document.getElementById('rpt-student');
-  sel.innerHTML = '<option value="">— All Students —</option>';
-  students.forEach(s => {
-    const o = document.createElement('option');
-    o.value = s.id;
-    o.textContent = (s.roll_no ? s.roll_no + '. ' : '') + s.name;
-    sel.appendChild(o);
-  });
-}
+async function loadUtReport() {
+  const school = document.getElementById('utr-school').value;
+  const cls = document.getElementById('utr-class').value;
+  const testName = document.getElementById('utr-test').value;
+  const year = document.getElementById('utr-year').value;
+  const reportType = document.getElementById('utr-report-type').value;
+  const area = document.getElementById('utr-area');
+  if (!school || !cls) { area.innerHTML = '<p style="color:#718096;">Select a school and class.</p>'; return; }
+  area.innerHTML = '<p style="color:#718096;">Loading…</p>';
 
-async function loadReport() {
-  const type = document.getElementById('rpt-type').value;
-  const school = document.getElementById('rpt-school').value;
-  const cls = document.getElementById('rpt-class').value;
-  const studentId = document.getElementById('rpt-student').value;
-  const year = document.getElementById('rpt-year').value;
-  const term = document.getElementById('rpt-term').value;
-  const test = document.getElementById('rpt-test').value;
-  const date = document.getElementById('rpt-date').value;
-  const out = document.getElementById('rpt-output');
-
-  if (!type) { out.innerHTML = '<div class="alert alert-error">Please select a report type.</div>'; return; }
-  out.innerHTML = '<div class="alert alert-info">Loading...</div>';
-
+  let cdata = { subjects: [] }, marks = [], remarks = [];
   try {
-    if (type === 'reportcard') await showReportCards(school, cls, studentId, term, year, out);
-    else if (type === 'unittest') await showUnitTestReport(school, cls, studentId, test, year, out);
-    else if (type === 'diary') await showDiaryReport(school, cls, studentId, date, year, out);
-  } catch(e) { out.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`; }
-}
+    const [cr, mr, rr] = await Promise.all([
+      fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`),
+      fetch('/api/unittests?' + new URLSearchParams({ school, class_name: cls, test_name: testName, academic_year: year })),
+      fetch('/api/unittests/remarks?' + new URLSearchParams({ school, class_name: cls, test_name: testName, academic_year: year, report_type: reportType })),
+    ]);
+    if (cr.ok) cdata = await cr.json();
+    if (mr.ok) marks = await mr.json();
+    if (rr.ok) remarks = await rr.json();
+  } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
 
-async function showReportCards(school, cls, studentId, term, year, out) {
-  let url = `/api/reportcards/list?academic_year=${year}`;
-  if (school) url += `&school=${encodeURIComponent(school)}`;
-  if (cls) url += `&class_name=${encodeURIComponent(cls)}`;
-  if (studentId) url += `&student_id=${studentId}`;
-  if (term) url += `&term=${encodeURIComponent(term)}`;
+  const allSubjects = cdata.subjects || [];
+  const subjects = reportType === 'islamic'
+    ? allSubjects.filter(s => UTR_ISLAMIC_NAMES.includes(s.name))
+    : allSubjects.filter(s => !UTR_ISLAMIC_NAMES.includes(s.name));
 
-  const r = await fetch(url);
-  if (!r.ok) { out.innerHTML = '<div class="alert alert-error">Failed to load report cards.</div>'; return; }
-  const cards = await r.json();
-  if (!cards.length) { out.innerHTML = '<div class="alert alert-info">No report cards found.</div>'; return; }
+  if (!subjects.length) { area.innerHTML = `<p style="color:#718096;">This class has no subjects in the ${UTR_REPORT_LABELS[reportType]}.</p>`; return; }
 
-  let html = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h2 style="margin:0;border:none;padding:0;">Report Cards (${cards.length})</h2>
-    <button class="btn-save" onclick="printReport()">🖨️ Print</button>
-  </div>`;
-
-  cards.forEach(card => {
-    html += `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px;page-break-inside:avoid;">
-      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-        <div><strong style="font-size:16px;">${card.student_name}</strong>
-          <span style="color:#718096;font-size:13px;margin-left:8px;">Roll: ${card.roll_no} | ${card.class_name} | ${card.school}</span></div>
-        <div><span style="background:#1e3a5f;color:#fff;padding:4px 10px;border-radius:20px;font-size:13px;">${card.term} — ${card.academic_year}</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px;">
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Attendance</small><br><strong>${card.attendance_present}/${card.attendance_total} days</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Conduct</small><br><strong>${card.conduct||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Activity</small><br><strong>${card.activity||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Arts</small><br><strong>${card.arts||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Communication</small><br><strong>${card.communication||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Discipline</small><br><strong>${card.discipline||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Homework</small><br><strong>${card.homework||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Participation</small><br><strong>${card.participation||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Respect</small><br><strong>${card.respect||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Teamwork</small><br><strong>${card.teamwork||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Punctuality</small><br><strong>${card.punctuality||'—'}</strong></div>
-        <div style="background:#f7fafc;padding:8px;border-radius:6px;"><small style="color:#718096;">Improvement</small><br><strong>${card.improvement||'—'}</strong></div>
-      </div>`;
-    if (card.marks && card.marks.length) {
-      html += `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
-        <thead><tr style="background:#1e3a5f;color:#fff;">
-          <th style="padding:6px 10px;text-align:left;">Subject</th>
-          <th style="padding:6px 10px;text-align:center;">Obtained</th>
-          <th style="padding:6px 10px;text-align:center;">Total</th>
-          <th style="padding:6px 10px;text-align:center;">%</th>
-        </tr></thead><tbody>`;
-      card.marks.forEach((m, i) => {
-        const pct = m.marks_total ? Math.round((m.marks_obtained/m.marks_total)*100) : '—';
-        html += `<tr style="background:${i%2===0?'#fff':'#f7fafc'}">
-          <td style="padding:6px 10px;">${m.subject}</td>
-          <td style="padding:6px 10px;text-align:center;">${m.marks_obtained??'—'}</td>
-          <td style="padding:6px 10px;text-align:center;">${m.marks_total??'—'}</td>
-          <td style="padding:6px 10px;text-align:center;">${pct}${pct!=='—'?'%':''}</td>
-        </tr>`;
-      });
-      html += '</tbody></table>';
-    }
-    if (card.remarks) html += `<div style="background:#fffbeb;padding:8px 12px;border-radius:6px;font-size:13px;"><strong>Remarks:</strong> ${card.remarks}</div>`;
-    html += '</div>';
-  });
-  html += '</div>';
-  out.innerHTML = html;
-}
-
-async function showUnitTestReport(school, cls, studentId, test, year, out) {
-  if (!cls) { out.innerHTML = '<div class="alert alert-error">Please select a Class to view Unit Test marks (format is per-class).</div>'; return; }
-  if (!test) { out.innerHTML = '<div class="alert alert-error">Please select a Test.</div>'; return; }
-
-  // Get subject config for this class (same as entry tab)
-  const cr = await fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`);
-  const cdata = cr.ok ? await cr.json() : { subjects: [] };
-  const subjects = cdata.subjects || [];
-  if (!subjects.length) { out.innerHTML = '<div class="alert alert-info">No subject config found for this class.</div>'; return; }
-
-  let url = `/api/unittests?academic_year=${year}&test_name=${encodeURIComponent(test)}`;
-  if (school) url += `&school=${encodeURIComponent(school)}`;
-  if (cls) url += `&class_name=${encodeURIComponent(cls)}`;
-
-  const r = await fetch(url);
-  if (!r.ok) { out.innerHTML = '<div class="alert alert-error">Failed to load unit test marks.</div>'; return; }
-  let rows = await r.json();
-  if (studentId) rows = rows.filter(rr => String(rr.student_id) === String(studentId));
-  if (!rows.length) { out.innerHTML = '<div class="alert alert-info">No unit test marks found.</div>'; return; }
-
-  // Group by student: byStudent[student_id][subject] = row
   const byStudent = {};
-  rows.forEach(rr => {
-    const key = String(rr.student_id);
-    if (!byStudent[key]) byStudent[key] = { name: rr.student_name, roll_no: rr.roll_no, subjects: {} };
-    byStudent[key].subjects[rr.subject] = rr;
+  marks.forEach(m => {
+    if (!byStudent[m.student_id]) byStudent[m.student_id] = { student_id: m.student_id, name: m.student_name, roll_no: m.roll_no, subjects: {} };
+    byStudent[m.student_id].subjects[m.subject] = m;
   });
+  const list = Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||9999)-(parseInt(b.roll_no)||9999) || (a.name||'').localeCompare(b.name||''));
+  if (!list.length) { area.innerHTML = '<p style="color:#718096;">No marks saved yet for this school, class, year and test.</p>'; return; }
+  const remarksMap = {};
+  remarks.forEach(r => { remarksMap[r.student_id] = r.remarks || ''; });
 
-  const students = Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||0)-(parseInt(b.roll_no)||0));
-
-  // Build header rows exactly like the entry tab
-  let h1 = `<tr style="background:#1e3a5f;color:#fff;">
-    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:40px;position:sticky;left:0;background:#1e3a5f;z-index:2;">Roll</th>
-    <th rowspan="2" style="padding:8px 10px;border:1px solid #2d5a8e;min-width:150px;position:sticky;left:40px;background:#1e3a5f;z-index:2;">Name</th>`;
-  subjects.forEach(subj => {
-    const total = subj.parts.reduce((a,p) => a+p.max, 0);
-    h1 += `<th colspan="${subj.parts.length + 1}" style="padding:6px 8px;border:1px solid #2d5a8e;text-align:center;">${subj.name}<br><small style="font-weight:normal;opacity:0.85">/${total}</small></th>`;
-  });
-  h1 += '</tr>';
-
-  let h2 = '<tr style="background:#2d5080;color:#fff;">';
-  subjects.forEach(subj => {
-    subj.parts.forEach(p => {
-      h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;">${p.label}<br><small>/${p.max}</small></th>`;
-    });
-    h2 += `<th style="padding:5px 6px;border:1px solid #2d5a8e;font-size:10px;font-weight:600;text-align:center;background:#1a3a5f;">Total</th>`;
-  });
-  h2 += '</tr>';
-
-  // Build student rows
-  let bodyHtml = '';
-  students.forEach((st, si) => {
-    const rowBg = si % 2 === 0 ? '#fff' : '#f7fafc';
-    bodyHtml += `<tr style="background:${rowBg}">
-      <td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:700;text-align:center;position:sticky;left:0;background:inherit;">${st.roll_no||''}</td>
-      <td style="padding:4px 10px;border:1px solid #e2e8f0;font-weight:600;position:sticky;left:40px;background:inherit;">${st.name}</td>`;
-
-    subjects.forEach(subj => {
-      const ex = st.subjects[subj.name] || {};
-      let subjTotal = 0;
-      subj.parts.forEach((p, pi) => {
-        const val = ex[`part${pi+1}_marks`] || '';
-        if (val !== '') subjTotal += parseFloat(val) || 0;
-        bodyHtml += `<td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;">${val || '—'}</td>`;
-      });
-      bodyHtml += `<td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;background:#edf2f7;"><strong>${ex.obtained_marks || (subjTotal||'—')}</strong></td>`;
-    });
-    bodyHtml += '</tr>';
-  });
-
-  let html = `<div class="card" style="padding:16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
-      <h2 style="margin:0;border:none;padding:0;">Unit Test Marks (Std ${cls}) — ${test} — ${year}</h2>
-      <button class="btn-save" onclick="printReport()">🖨️ Print</button>
-    </div>
-    <div style="overflow-x:auto;">
-      <table style="border-collapse:collapse;font-size:12px;white-space:nowrap;">
-        <thead>${h1}${h2}</thead>
-        <tbody>${bodyHtml}</tbody>
-      </table>
-    </div>
-  </div>`;
-  out.innerHTML = html;
+  utrCache = { list, subjects, year, testName, school, cls, reportType, remarksMap };
+  renderUtrTable();
 }
 
-async function showDiaryReport(school, cls, studentId, date, year, out) {
-  let url = '/api/diary?';
-  if (studentId) url += `student_id=${studentId}&`;
-  else if (school) url += `school=${encodeURIComponent(school)}&`;
-  if (cls && !studentId) url += `class_name=${encodeURIComponent(cls)}&`;
-  if (date) url += `date=${date}&`;
-  else url += `from=2024-06-01&`;
+function renderUtrTable() {
+  const area = document.getElementById('utr-area');
+  if (!utrCache) return;
+  const { list, subjects, reportType, remarksMap } = utrCache;
+  const grandMax = subjects.reduce((a,s) => a + utrSubjectTotal(s), 0);
+  const maxParts = utrMaxParts(subjects);
+  const rowsCount = maxParts + 1;
+  const headCols = subjects.map(s => `<th>${escapeHtml(s.name)}</th>`).join('');
 
-  const r = await fetch(url);
-  if (!r.ok) { out.innerHTML = '<div class="alert alert-error">Failed to load diary entries.</div>'; return; }
-  const entries = await r.json();
-  if (!entries.length) { out.innerHTML = '<div class="alert alert-info">No diary entries found.</div>'; return; }
-
-  let html = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h2 style="margin:0;border:none;padding:0;">Daily Diary (${entries.length} entries)</h2>
-    <button class="btn-save" onclick="printReport()">🖨️ Print</button>
-  </div><div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:13px;">
-    <thead><tr style="background:#1e3a5f;color:#fff;">
-      <th style="padding:8px 10px;">Date</th>
-      <th style="padding:8px 10px;">Student</th>
-      <th style="padding:8px 10px;">Class</th>
-      <th style="padding:8px 10px;">Activity</th>
-      <th style="padding:8px 10px;">Behaviour</th>
-      <th style="padding:8px 10px;">Homework</th>
-      <th style="padding:8px 10px;">Classwork</th>
-      <th style="padding:8px 10px;">Remarks</th>
-    </tr></thead><tbody>`;
-
-  entries.forEach((e, i) => {
-    html += `<tr style="background:${i%2===0?'#fff':'#f7fafc'}">
-      <td style="padding:6px 10px;white-space:nowrap;">${e.entry_date}</td>
-      <td style="padding:6px 10px;font-weight:600;">${e.student_name||'—'}</td>
-      <td style="padding:6px 10px;">${e.class_name||''} ${e.school||''}</td>
-      <td style="padding:6px 10px;">${e.activity||'—'}</td>
-      <td style="padding:6px 10px;">${e.behaviour||'—'}</td>
-      <td style="padding:6px 10px;">${e.homework||'—'}</td>
-      <td style="padding:6px 10px;">${e.classwork||'—'}</td>
-      <td style="padding:6px 10px;">${e.remarks||'—'}</td>
-    </tr>`;
+  let bodyHtml = '';
+  list.forEach((st, idx) => {
+    let total = 0;
+    const totalPerSubject = {};
+    subjects.forEach(s => {
+      const ex = st.subjects[s.name];
+      const obt = ex && ex.obtained_marks !== '' && ex.obtained_marks != null ? parseFloat(ex.obtained_marks) : null;
+      totalPerSubject[s.name] = obt;
+      if (obt !== null) total += obt;
+    });
+    const pct = grandMax ? ((total/grandMax)*100).toFixed(1) : '0.0';
+    for (let r = 0; r < rowsCount; r++) {
+      const isTotalRow = r === maxParts;
+      bodyHtml += '<tr>';
+      if (r === 0) {
+        bodyHtml += `<td rowspan="${rowsCount}">${idx+1}</td><td rowspan="${rowsCount}">${escapeHtml(st.roll_no||'-')}</td><td rowspan="${rowsCount}" style="text-align:left; white-space:nowrap;">${escapeHtml(st.name)}</td>`;
+      }
+      bodyHtml += `<td style="text-align:left; white-space:nowrap; font-weight:${isTotalRow?700:400};">${escapeHtml(utrRowLabel(subjects, r, maxParts))}</td>`;
+      subjects.forEach(s => {
+        if (isTotalRow) {
+          const obt = totalPerSubject[s.name];
+          bodyHtml += `<td style="font-weight:700; background:#f7fafc;">${obt!==null&&obt!==undefined ? obt : '—'}</td>`;
+        } else {
+          const p = s.parts[r];
+          if (!p) { bodyHtml += '<td></td>'; return; }
+          const ex = st.subjects[s.name];
+          const v = ex ? ex[`${p.key}_marks`] : '';
+          bodyHtml += `<td>${v!==undefined && v!=='' && v!=null ? escapeHtml(v) : '—'}</td>`;
+        }
+      });
+      if (isTotalRow) {
+        bodyHtml += `<td style="font-weight:700;">${total}/${grandMax}</td><td>${pct}%</td>`;
+        bodyHtml += `<td style="font-weight:700; text-align:center;">${utrGrade(pct)}</td>`;
+        bodyHtml += `<td><select onchange="saveUtrRemark(${st.student_id}, this)" style="width:100%; font-size:12px;">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select></td>`;
+      } else {
+        bodyHtml += `<td></td><td></td><td></td><td></td>`;
+      }
+      bodyHtml += '</tr>';
+    }
   });
-  html += '</tbody></table></div></div>';
-  out.innerHTML = html;
+
+  area.innerHTML = `
+    <div class="card">
+      <h2>${escapeHtml(UTR_REPORT_LABELS[reportType])}${reportType==='islamic' ? ' — Islamic Studies, Arabic Writing &amp; Arabic Oral' : ''}</h2>
+      <div style="overflow:auto; max-height:65vh;">
+        <table class="bulk-table" id="utr-table">
+          <thead><tr><th>#</th><th>Roll No.</th><th>Name</th><th>Total Marks</th>${headCols}<th>Total</th><th>%</th><th>Grade</th><th>Remarks</th></tr></thead>
+          <tbody>${bodyHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function saveUtrRemark(studentId, selectEl) {
+  if (!utrCache) return;
+  const { year, testName, reportType } = utrCache;
+  try {
+    const r = await fetch('/api/unittests/remarks', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      student_id: studentId, academic_year: year, test_name: testName, report_type: reportType, remarks: selectEl.value
+    })});
+    if (!r.ok) { const d = await r.json(); alert(d.error || 'Save failed.'); return; }
+    utrCache.remarksMap[studentId] = selectEl.value;
+    selectEl.style.transition = 'background .3s';
+    selectEl.style.background = '#f0fff4';
+    setTimeout(() => { selectEl.style.background = ''; }, 800);
+  } catch(e) { alert('Network error.'); }
+}
+
+function printUtReport() {
+  if (!utrCache || !utrCache.list.length) { alert('Load a report first.'); return; }
+  const table = document.getElementById('utr-table');
+  if (!table) { alert('Load a report first.'); return; }
+  const { school, cls, year, testName, reportType } = utrCache;
+
+  // Swap each remarks <select> for its selected text — a live dropdown
+  // control has no place on a printed page.
+  const clone = table.cloneNode(true);
+  clone.querySelectorAll('select').forEach(sel => {
+    const span = document.createElement('span');
+    span.textContent = sel.value;
+    sel.replaceWith(span);
+  });
+
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${escapeHtml(testName)} — ${escapeHtml(UTR_REPORT_LABELS[reportType])}</title>
+    <style>
+      @page { size: A4 landscape; margin: 8mm; }
+      body{font-family:'Segoe UI',sans-serif;padding:0;}
+      h2{font-size:16px;margin-bottom:2px;}
+      p.sub{font-size:11px;color:#555;margin-bottom:10px;}
+      table{width:100%;border-collapse:collapse;font-size:9px;}
+      th,td{border:1px solid #999;padding:3px 4px;text-align:center;}
+      th{background:#f0f0f0;}
+    </style></head><body>
+    <h2>${escapeHtml(testName)} — ${escapeHtml(UTR_REPORT_LABELS[reportType])} — Std ${escapeHtml(cls)}</h2>
+    <p class="sub">${escapeHtml(school)} · Academic Year ${escapeHtml(year)}</p>
+    ${clone.outerHTML}
+    <script>window.onload=()=>window.print();<\/script>
+    </body></html>`);
+  w.document.close();
 }
 
 // ── Helpers ───────────────────────────────────────────────────
-function printReport() {
-  const now = new Date();
-  document.getElementById('print-date').textContent = 'Printed on: ' + now.toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' });
-  window.print();
-}
-
 function showAlert(id, msg, type) {
   const el = document.getElementById(id);
   el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;

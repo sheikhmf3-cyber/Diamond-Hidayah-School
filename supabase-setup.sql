@@ -129,3 +129,18 @@ CREATE TABLE IF NOT EXISTS cloud_unit_test_marks (
   synced_at TIMESTAMPTZ DEFAULT NULL,
   UNIQUE(student_id, academic_year, test_name, subject)
 );
+
+-- ============================================================
+-- Unit Test Report Remarks (Academic / Islamic classwise report)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cloud_unit_test_remarks (
+  id SERIAL PRIMARY KEY,
+  student_id INTEGER NOT NULL,
+  academic_year TEXT NOT NULL,
+  test_name TEXT NOT NULL,
+  report_type TEXT NOT NULL DEFAULT 'academic',
+  remarks TEXT DEFAULT '',
+  recorded_by INTEGER,
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(student_id, academic_year, test_name, report_type)
+);
