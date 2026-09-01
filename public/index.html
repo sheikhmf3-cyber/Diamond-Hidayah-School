@@ -139,6 +139,20 @@
     .ut-scroll-box td.ut-actions { border-top:2px solid #e2e8f0; margin-top:10px; padding:12px 0 0 !important; text-align:left; }
     .ut-scroll-box td.ut-actions button { padding:9px 16px; font-size:13px; }
   }
+
+  /* Unit Test Report — mobile card view (one card per student, JS decides
+     whether to render this or the desktop table based on screen width, so
+     no media query gating needed here). */
+  .utr-cards { display:flex; flex-direction:column; gap:14px; }
+  .utr-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .utr-card-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; padding-bottom:10px; border-bottom:2px solid #1e3a5f; font-size:16px; }
+  .utr-card-roll { color:#718096; font-size:13px; font-weight:600; }
+  .utr-card-subject { border-top:1px solid #edf2f7; padding-top:8px; margin-top:8px; }
+  .utr-card-subject-name { font-weight:700; font-size:12px; color:#1e3a5f; text-transform:uppercase; letter-spacing:.3px; margin-bottom:6px; }
+  .utr-card-part { display:flex; justify-content:space-between; font-size:13px; padding:2px 0; color:#4a5568; }
+  .utr-card-subject-total { font-weight:700; color:#1a202c; border-top:1px dashed #e2e8f0; margin-top:4px; padding-top:4px; }
+  .utr-card-summary { border-top:2px solid #1e3a5f; margin-top:10px; padding-top:10px; }
+  .utr-card-summary .utr-card-part { font-size:14px; font-weight:600; color:#1a202c; }
 </style>
 </head>
 <body>
@@ -946,10 +960,25 @@ async function loadUtReport() {
   renderUtrTable();
 }
 
-function renderUtrTable() {
-  const area = document.getElementById('utr-area');
-  if (!utrCache) return;
-  const { list, subjects, reportType, remarksMap } = utrCache;
+// Per-student obtained total / grand max / percentage — shared by the
+// desktop table, the mobile cards and print.
+function utrStudentTotals(st, subjects, grandMax) {
+  let total = 0;
+  const totalPerSubject = {};
+  subjects.forEach(s => {
+    const ex = st.subjects[s.name];
+    const obt = ex && ex.obtained_marks !== '' && ex.obtained_marks != null ? parseFloat(ex.obtained_marks) : null;
+    totalPerSubject[s.name] = obt;
+    if (obt !== null) total += obt;
+  });
+  const pct = grandMax ? ((total/grandMax)*100).toFixed(1) : '0.0';
+  return { total, totalPerSubject, pct };
+}
+
+// Desktop: subjects across the top, rowspan cells for #/Roll/Name/Total/%/
+// Grade/Remarks — the school's printed marking-sheet layout, horizontally
+// scrollable with pinned identity columns.
+function buildUtrTableHtml(list, subjects, remarksMap) {
   const grandMax = subjects.reduce((a,s) => a + utrSubjectTotal(s), 0);
   const maxParts = utrMaxParts(subjects);
   const rowsCount = maxParts + 1;
@@ -957,15 +986,7 @@ function renderUtrTable() {
 
   let bodyHtml = '';
   list.forEach((st, idx) => {
-    let total = 0;
-    const totalPerSubject = {};
-    subjects.forEach(s => {
-      const ex = st.subjects[s.name];
-      const obt = ex && ex.obtained_marks !== '' && ex.obtained_marks != null ? parseFloat(ex.obtained_marks) : null;
-      totalPerSubject[s.name] = obt;
-      if (obt !== null) total += obt;
-    });
-    const pct = grandMax ? ((total/grandMax)*100).toFixed(1) : '0.0';
+    const { total, totalPerSubject, pct } = utrStudentTotals(st, subjects, grandMax);
     for (let r = 0; r < rowsCount; r++) {
       const isTotalRow = r === maxParts;
       bodyHtml += '<tr>';
@@ -996,15 +1017,62 @@ function renderUtrTable() {
     }
   });
 
+  return `
+    <div class="utr-scroll-box">
+      <table id="utr-table">
+        <thead><tr><th class="utr-sticky-idx">#</th><th class="utr-sticky-roll">Roll No.</th><th class="utr-sticky-name">Name</th><th>Total Marks</th>${headCols}<th>Total</th><th>%</th><th>Grade</th><th>Remarks</th></tr></thead>
+        <tbody>${bodyHtml}</tbody>
+      </table>
+    </div>`;
+}
+
+// Mobile: one vertical card per student — subject name as a heading, then
+// its component breakdown as plain lines (no rowspan needed since each
+// card is independent), then the grand total/%/grade/remarks at the
+// bottom. Sorted by roll number, same order as the desktop table.
+function buildUtrCardsHtml(list, subjects, remarksMap) {
+  const grandMax = subjects.reduce((a,s) => a + utrSubjectTotal(s), 0);
+  const cards = list.map((st, idx) => {
+    const { total, totalPerSubject, pct } = utrStudentTotals(st, subjects, grandMax);
+    const subjectBlocks = subjects.map(s => {
+      const ex = st.subjects[s.name];
+      const partsHtml = s.parts.map(p => {
+        const v = ex ? ex[`${p.key}_marks`] : '';
+        return `<div class="utr-card-part"><span>${escapeHtml(p.label)}</span><span>${v!==undefined && v!=='' && v!=null ? escapeHtml(v) : '—'} / ${p.max}</span></div>`;
+      }).join('');
+      const obt = totalPerSubject[s.name];
+      return `<div class="utr-card-subject">
+        <div class="utr-card-subject-name">${escapeHtml(s.name)}</div>
+        ${partsHtml}
+        <div class="utr-card-part utr-card-subject-total"><span>Total</span><span>${obt!==null&&obt!==undefined?obt:'—'} / ${utrSubjectTotal(s)}</span></div>
+      </div>`;
+    }).join('');
+    return `<div class="utr-card">
+      <div class="utr-card-header"><span class="utr-card-roll">Roll ${escapeHtml(st.roll_no||'-')}</span><strong>${escapeHtml(st.name)}</strong></div>
+      ${subjectBlocks}
+      <div class="utr-card-summary">
+        <div class="utr-card-part"><span>Grand Total</span><span>${total} / ${grandMax}</span></div>
+        <div class="utr-card-part"><span>Percentage</span><span>${pct}%</span></div>
+        <div class="utr-card-part"><span>Grade</span><span>${utrGrade(pct)}</span></div>
+        <label style="display:block; margin-top:8px;">Remarks</label>
+        <select onchange="saveUtrRemark(${st.student_id}, this)">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="utr-cards">${cards}</div>`;
+}
+
+function renderUtrTable() {
+  const area = document.getElementById('utr-area');
+  if (!utrCache) return;
+  const { list, subjects, reportType, remarksMap } = utrCache;
+  const isMobile = window.innerWidth <= 720;
+  const bodyContent = isMobile ? buildUtrCardsHtml(list, subjects, remarksMap) : buildUtrTableHtml(list, subjects, remarksMap);
+
   area.innerHTML = `
     <div class="card">
       <h2>${escapeHtml(UTR_REPORT_LABELS[reportType])}${reportType==='islamic' ? ' — Islamic Studies, Arabic Writing &amp; Arabic Oral' : ''}</h2>
-      <div class="utr-scroll-box">
-        <table id="utr-table">
-          <thead><tr><th class="utr-sticky-idx">#</th><th class="utr-sticky-roll">Roll No.</th><th class="utr-sticky-name">Name</th><th>Total Marks</th>${headCols}<th>Total</th><th>%</th><th>Grade</th><th>Remarks</th></tr></thead>
-          <tbody>${bodyHtml}</tbody>
-        </table>
-      </div>
+      ${bodyContent}
     </div>`;
 }
 
@@ -1025,14 +1093,17 @@ async function saveUtrRemark(studentId, selectEl) {
 
 function printUtReport() {
   if (!utrCache || !utrCache.list.length) { alert('Load a report first.'); return; }
-  const table = document.getElementById('utr-table');
-  if (!table) { alert('Load a report first.'); return; }
-  const { school, cls, year, testName, reportType } = utrCache;
+  const { list, subjects, remarksMap, school, cls, year, testName, reportType } = utrCache;
 
-  // Swap each remarks <select> for its selected text — a live dropdown
-  // control has no place on a printed page.
-  const clone = table.cloneNode(true);
-  clone.querySelectorAll('select').forEach(sel => {
+  // Built straight from utrCache rather than cloning whatever's on screen —
+  // the on-screen view switches between a table (desktop) and cards
+  // (mobile), but print should always be the same table layout regardless
+  // of which device saved the marks. Remarks render as plain text since a
+  // live dropdown has no place on a printed page.
+  const tableHtml = buildUtrTableHtml(list, subjects, remarksMap);
+  const container = document.createElement('div');
+  container.innerHTML = tableHtml;
+  container.querySelectorAll('select').forEach(sel => {
     const span = document.createElement('span');
     span.textContent = sel.value;
     sel.replaceWith(span);
@@ -1051,7 +1122,7 @@ function printUtReport() {
     </style></head><body>
     <h2>${escapeHtml(testName)} — ${escapeHtml(UTR_REPORT_LABELS[reportType])} — Std ${escapeHtml(cls)}</h2>
     <p class="sub">${escapeHtml(school)} · Academic Year ${escapeHtml(year)}</p>
-    ${clone.outerHTML}
+    ${container.innerHTML}
     <script>window.onload=()=>window.print();<\/script>
     </body></html>`);
   w.document.close();
