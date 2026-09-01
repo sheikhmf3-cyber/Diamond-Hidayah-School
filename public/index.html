@@ -186,6 +186,7 @@
     <div class="tab" onclick="switchTab('diary')">📖 Daily Diary</div>
     <div class="tab" onclick="switchTab('unittest')">✏️ Unit Tests</div>
     <div class="tab" onclick="switchTab('utreport')">📊 Unit Test Report</div>
+    <div class="tab" onclick="switchTab('top5')">🏆 Top 5</div>
   </div>
 
   <div class="content">
@@ -439,6 +440,54 @@
       <div id="utr-area"></div>
     </div>
 
+    <!-- ═══════════════════════════════ TOP 5 STUDENTS TAB ═══════════════════════════════ -->
+    <div id="tab-top5" style="display:none;">
+      <div class="card">
+        <h2>🏆 Top 5 Students — Class Toppers</h2>
+        <p style="font-size:13px;color:#718096;margin-bottom:16px;">Ranks the class by percentage for one Unit Test. Only Unit Test 1 / Unit Test 2 are available online — Term 1/Term 2 (Results/Marksheet) aren't synced to the cloud portal.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>School</label>
+            <select id="top5-school" onchange="loadTop5Classes()">
+              <option value="">— Select School —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Class</label>
+            <select id="top5-class">
+              <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Test Name</label>
+            <select id="top5-test">
+              <option>Unit Test 1</option>
+              <option>Unit Test 2</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Academic Year</label>
+            <select id="top5-year">
+              <option>2026-27</option>
+              <option>2025-26</option>
+              <option>2024-25</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Report</label>
+            <select id="top5-report-type">
+              <option value="academic">📘 Academic</option>
+              <option value="islamic">🕌 Islamic</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-save" onclick="loadTop5()">🔄 View</button>
+        <button class="btn-add-subject" onclick="printTop5()">🖨️ Print</button>
+      </div>
+
+      <div id="top5-area"></div>
+    </div>
+
   </div>
 </div>
 
@@ -491,7 +540,7 @@ async function loadAllClasses() {
 
 function populateSchoolDropdowns() {
   const schools = [...new Set(allClasses.map(c => c.school))];
-  ['rc-school','d-school','ut-school','utr-school'].forEach(id => {
+  ['rc-school','d-school','ut-school','utr-school','top5-school'].forEach(id => {
     const sel = document.getElementById(id);
     sel.innerHTML = '<option value="">— Select School —</option>';
     schools.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
@@ -500,7 +549,7 @@ function populateSchoolDropdowns() {
 
 // ── Tabs ──────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['reportcard','diary','unittest','utreport'];
+  const tabs = ['reportcard','diary','unittest','utreport','top5'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   tabs.forEach(t => { document.getElementById('tab-'+t).style.display = t===name ? '' : 'none'; });
 }
@@ -1123,6 +1172,120 @@ function printUtReport() {
     <h2>${escapeHtml(testName)} — ${escapeHtml(UTR_REPORT_LABELS[reportType])} — Std ${escapeHtml(cls)}</h2>
     <p class="sub">${escapeHtml(school)} · Academic Year ${escapeHtml(year)}</p>
     ${container.innerHTML}
+    <script>window.onload=()=>window.print();<\/script>
+    </body></html>`);
+  w.document.close();
+}
+
+// ── Top 5 Students (Unit Test 1 / Unit Test 2 only — Results/Marksheet
+// isn't synced to the cloud portal, so Term 1/Term 2 aren't available
+// here the way they are on the local system) ───────────────────
+let top5Cache = null; // { school, cls, test, year, reportType, subjects, list }
+const TOP5_REPORT_LABELS = { academic: 'Academic Report', islamic: 'Islamic Report' };
+
+function loadTop5Classes() {
+  const school = document.getElementById('top5-school').value;
+  const classes = getClassesForSchool(school);
+  const sel = document.getElementById('top5-class');
+  sel.innerHTML = '<option value="">— Select Class —</option>';
+  classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
+  document.getElementById('top5-area').innerHTML = '';
+}
+
+async function loadTop5() {
+  const school = document.getElementById('top5-school').value;
+  const cls = document.getElementById('top5-class').value;
+  const test = document.getElementById('top5-test').value;
+  const year = document.getElementById('top5-year').value;
+  const reportType = document.getElementById('top5-report-type').value;
+  const area = document.getElementById('top5-area');
+  if (!school || !cls) { area.innerHTML = '<p style="color:#718096;">Select a school and class.</p>'; return; }
+  area.innerHTML = '<p style="color:#718096;">Loading…</p>';
+
+  let cdata = { subjects: [] }, marks = [];
+  try {
+    const [cr, mr] = await Promise.all([
+      fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`),
+      fetch('/api/unittests?' + new URLSearchParams({ school, class_name: cls, test_name: test, academic_year: year })),
+    ]);
+    if (cr.ok) cdata = await cr.json();
+    if (mr.ok) marks = await mr.json();
+  } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
+
+  const allSubjects = cdata.subjects || [];
+  const subjects = reportType === 'islamic'
+    ? allSubjects.filter(s => UTR_ISLAMIC_NAMES.includes(s.name))
+    : allSubjects.filter(s => !UTR_ISLAMIC_NAMES.includes(s.name));
+  if (!subjects.length) { area.innerHTML = `<p style="color:#718096;">This class has no subjects in the ${TOP5_REPORT_LABELS[reportType]}.</p>`; return; }
+
+  const subjectNames = new Set(subjects.map(s => s.name));
+  const totals = {}; // student_id -> { name, roll_no, obtained, total }
+  marks.forEach(m => {
+    if (!subjectNames.has(m.subject)) return;
+    if (!totals[m.student_id]) totals[m.student_id] = { name: m.student_name, roll_no: m.roll_no, obtained: 0, total: 0 };
+    totals[m.student_id].obtained += parseFloat(m.obtained_marks) || 0;
+    totals[m.student_id].total += parseFloat(m.total_marks) || 0;
+  });
+
+  const list = Object.values(totals)
+    .filter(t => t.total > 0)
+    .map(t => ({ ...t, percentage: Math.round((t.obtained / t.total) * 10000) / 100 }))
+    .sort((a,b) => b.percentage - a.percentage || b.obtained - a.obtained)
+    .slice(0, 5);
+
+  top5Cache = { school, cls, test, year, reportType, list };
+  renderTop5(list, reportType);
+}
+
+function top5RowsHtml(list) {
+  if (!list.length) return `<tr><td colspan="5" style="text-align:center; color:#a0aec0;">No marks recorded</td></tr>`;
+  const medal = i => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1);
+  return list.map((r,i) => `<tr>
+    <td style="text-align:center; font-size:18px;">${medal(i)}</td>
+    <td><strong>${escapeHtml(r.name)}</strong></td>
+    <td style="text-align:center;">${escapeHtml(r.roll_no||'-')}</td>
+    <td style="text-align:center;">${r.obtained} / ${r.total}</td>
+    <td style="text-align:center;">${r.percentage}%</td>
+  </tr>`).join('');
+}
+
+function renderTop5(list, reportType) {
+  document.getElementById('top5-area').innerHTML = `
+    <div class="card">
+      <h2>${escapeHtml(TOP5_REPORT_LABELS[reportType])}</h2>
+      <table class="bulk-table">
+        <thead><tr><th>Rank</th><th>Student</th><th>Roll No</th><th>Marks</th><th>%</th></tr></thead>
+        <tbody>${top5RowsHtml(list)}</tbody>
+      </table>
+    </div>`;
+}
+
+function printTop5() {
+  if (!top5Cache) { alert('Load a class first.'); return; }
+  const { school, cls, test, year, reportType, list } = top5Cache;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Top 5 Students — Std ${escapeHtml(cls)}</title>
+    <style>
+      @page { size: A4 landscape; margin: 10mm; }
+      html,body{height:100%;width:100%;}
+      body{font-family:'Segoe UI',sans-serif;padding:0;margin:0;box-sizing:border-box;}
+      *{box-sizing:border-box;}
+      h1{font-size:38px;margin:0 0 2px;text-align:center;color:#1e3a5f;font-weight:800;}
+      h2{font-size:26px;margin:0 0 6px;text-align:center;color:#333;font-weight:600;}
+      p.sub{font-size:18px;color:#333;text-align:center;margin:0 0 24px;font-weight:600;}
+      table{width:100%;border-collapse:collapse;}
+      th,td{border:2px solid #444;padding:16px 20px;text-align:center;font-size:26px;}
+      th{background:#1e3a5f;color:#fff;font-size:20px;}
+      td:nth-child(2){text-align:left;font-weight:700;}
+      td:first-child{font-size:32px;width:10%;}
+    </style></head><body>
+    <h1>${escapeHtml(school)}</h1>
+    <h2>🏆 Top 5 Students — Class Toppers — ${escapeHtml(TOP5_REPORT_LABELS[reportType])}</h2>
+    <p class="sub">${escapeHtml(test)} · Std ${escapeHtml(cls)} · Academic Year ${escapeHtml(year)}</p>
+    <table>
+      <thead><tr><th>Rank</th><th>Student</th><th>Roll No</th><th>Marks</th><th>%</th></tr></thead>
+      <tbody>${top5RowsHtml(list)}</tbody>
+    </table>
     <script>window.onload=()=>window.print();<\/script>
     </body></html>`);
   w.document.close();
