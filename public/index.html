@@ -499,7 +499,8 @@ function getClassesForSchool(school) {
 async function fetchStudents(school, cls) {
   if (!school || !cls) return [];
   const r = await fetch(`/api/students?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}`);
-  return r.ok ? await r.json() : [];
+  const students = r.ok ? await r.json() : [];
+  return students.sort((a,b) => (parseInt(a.roll_no)||9999) - (parseInt(b.roll_no)||9999) || (a.name||'').localeCompare(b.name||''));
 }
 
 // ── Report Card ───────────────────────────────────────────────
