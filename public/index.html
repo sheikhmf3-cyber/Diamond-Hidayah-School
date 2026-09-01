@@ -102,6 +102,43 @@
     .content { padding:16px; }
     .topbar h1 { font-size:14px; }
   }
+
+  /* Below ~720px the wide entry sheet (a real spreadsheet — many subject
+     columns of stacked part-inputs) is unusable as a shrunk horizontal
+     table on a phone: inputs become too small to tap and everything
+     requires scrolling in two directions at once. So on mobile it drops
+     the table layout entirely and turns every student's <tr> into its own
+     vertical card — Roll/Name as the card header, then one full-width
+     block per subject, in normal reading order. The Unit Test Report
+     (.utr-scroll-box) keeps the horizontal-scroll table instead, since its
+     rowspan cells only make sense in a real table. */
+  @media(max-width:720px) {
+    .ut-scroll-box { max-height:none; overflow:visible; border:none; }
+    .ut-scroll-box table, .ut-scroll-box thead, .ut-scroll-box tbody,
+    .ut-scroll-box tr, .ut-scroll-box th, .ut-scroll-box td { display:block; width:100% !important; }
+    .ut-scroll-box thead { display:none; }
+    .ut-scroll-box tbody tr {
+      background:#fff; border:1px solid #e2e8f0; border-radius:10px;
+      margin-bottom:16px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,.08);
+    }
+    .ut-scroll-box .ut-sticky-roll, .ut-scroll-box .ut-sticky-name {
+      position:static; box-shadow:none; padding:0; display:inline-block;
+    }
+    .ut-scroll-box .ut-sticky-roll { color:#718096; font-size:13px; margin-right:8px; }
+    .ut-scroll-box .ut-sticky-name { font-size:16px; margin-bottom:10px; }
+    .ut-scroll-box td[data-subject] {
+      border-top:1px solid #edf2f7; padding:10px 0 4px !important; margin-top:2px;
+    }
+    .ut-scroll-box td[data-subject]::before {
+      content: attr(data-subject); display:block; font-weight:700; font-size:12px;
+      color:#1e3a5f; text-transform:uppercase; letter-spacing:.3px; margin-bottom:8px;
+    }
+    .ut-scroll-box td[data-subject] > div { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    .ut-scroll-box td[data-subject] label { margin-bottom:0; min-width:60px; font-size:12px !important; }
+    .ut-scroll-box .ut-marks-input { width:80px !important; font-size:16px !important; padding:8px !important; } /* 16px avoids iOS zoom-on-focus */
+    .ut-scroll-box td.ut-actions { border-top:2px solid #e2e8f0; margin-top:10px; padding:12px 0 0 !important; text-align:left; }
+    .ut-scroll-box td.ut-actions button { padding:9px 16px; font-size:13px; }
+  }
 </style>
 </head>
 <body>
@@ -726,14 +763,59 @@ function renderUtBulkTable(subjects, students, existingMap) {
       <td class="ut-sticky-roll">${escapeHtml(s.roll_no||'-')}</td>
       <td class="ut-sticky-name"><strong>${escapeHtml(s.name)}</strong></td>
       ${cells}
+      <td class="ut-actions">
+        <button class="btn-add-subject" onclick="saveUtRow(${s.id})">💾 Save</button>
+        <button class="btn-add-subject" onclick="clearUtRow(${s.id})">✖ Clear</button>
+      </td>
     </tr>`;
   }).join('');
 
   document.getElementById('ut-bulk-scroll').innerHTML = `
     <table id="ut-bulk-table">
-      <thead><tr><th class="ut-sticky-roll">Roll</th><th class="ut-sticky-name">Name</th>${headCols}</tr></thead>
+      <thead><tr><th class="ut-sticky-roll">Roll</th><th class="ut-sticky-name">Name</th>${headCols}<th>Actions</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// Collects one student row's subject entries — shared by the per-row Save
+// button and "Save All".
+function utCollectRowEntries(tr) {
+  if (!utEntryCache) return [];
+  const { test, year, subjects } = utEntryCache;
+  const studentId = tr.dataset.studentId;
+  const entries = [];
+  subjects.forEach(subjDef => {
+    const td = tr.querySelector(`td[data-subject="${CSS.escape(subjDef.name)}"]`);
+    if (!td) return;
+    const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subjDef.name };
+    subjDef.parts.forEach(p => {
+      const inp = td.querySelector(`.ut-marks-input[data-part="${CSS.escape(p.key)}"]`);
+      entry[`${p.key}_marks`] = inp ? inp.value : '';
+    });
+    entries.push(entry);
+  });
+  return entries;
+}
+
+async function saveUtRow(studentId) {
+  const tr = document.querySelector(`#ut-bulk-table tbody tr[data-student-id="${studentId}"]`);
+  if (!tr) return;
+  const entries = utCollectRowEntries(tr);
+  try {
+    const r = await fetch('/api/unittests/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries }) });
+    const d = await r.json();
+    if (!r.ok) { showAlert('ut-alert', d.error || 'Save failed.', 'error'); return; }
+    tr.style.transition = 'background .3s';
+    tr.style.background = '#f0fff4';
+    setTimeout(() => { tr.style.background = ''; }, 800);
+  } catch(e) { showAlert('ut-alert', 'Network error.', 'error'); }
+}
+
+function clearUtRow(studentId) {
+  const tr = document.querySelector(`#ut-bulk-table tbody tr[data-student-id="${studentId}"]`);
+  if (!tr) return;
+  tr.querySelectorAll('.ut-marks-input').forEach(inp => { inp.value = ''; });
+  tr.querySelectorAll('.ut-total-val').forEach(span => { span.textContent = '0'; });
 }
 
 function utRecalcTotal(inputEl) {
@@ -751,20 +833,9 @@ function utRecalcTotal(inputEl) {
 
 async function saveUnitTests() {
   if (!utEntryCache) { showAlert('ut-alert', 'Load a class first.', 'error'); return; }
-  const { test, year, subjects } = utEntryCache;
   const entries = [];
   document.querySelectorAll('#ut-bulk-table tbody tr').forEach(tr => {
-    const studentId = tr.dataset.studentId;
-    subjects.forEach(subjDef => {
-      const td = tr.querySelector(`td[data-subject="${CSS.escape(subjDef.name)}"]`);
-      if (!td) return;
-      const entry = { student_id: studentId, academic_year: year, test_name: test, subject: subjDef.name };
-      subjDef.parts.forEach(p => {
-        const inp = td.querySelector(`.ut-marks-input[data-part="${CSS.escape(p.key)}"]`);
-        entry[`${p.key}_marks`] = inp ? inp.value : '';
-      });
-      entries.push(entry);
-    });
+    entries.push(...utCollectRowEntries(tr));
   });
 
   const btn = document.getElementById('ut-save-btn');
