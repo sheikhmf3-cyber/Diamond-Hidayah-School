@@ -9,13 +9,18 @@ router.use(requireLogin);
 function wo(name, writingMax, oralMax) {
   return { name, parts: [{ key: 'part1', label: 'Writing', max: writingMax }, { key: 'part2', label: 'Oral', max: oralMax }] };
 }
+// Drawing/Craft have no oral component — a single Writing mark covering
+// the whole subject (writingMax+oralMax combined into one field).
+function single(name, max) {
+  return { name, parts: [{ key: 'part1', label: 'Writing', max }] };
+}
 
 const UNIT_TEST_GROUPS = {
   grp12: {
     classes: ['1st', '2nd'],
     subjects: [
       wo('ENG', 20, 5), wo('HINDI', 20, 5), wo('MARATHI', 20, 5), wo('MATHS', 20, 5), wo('EVS', 20, 5),
-      wo('COMPUTER', 20, 5), wo('DRAWING', 20, 5), wo('CRAFT', 20, 5), wo('ISLAMIC', 20, 5), wo('ARABIC WRITING', 20, 5),
+      wo('COMPUTER', 20, 5), single('DRAWING', 25), single('CRAFT', 25), wo('ISLAMIC', 20, 5), wo('ARABIC WRITING', 20, 5),
       { name: 'ARABIC ORAL', parts: [{ key: 'part1', label: 'Qaida', max: 5 }, { key: 'part2', label: 'Dua', max: 10 }, { key: 'part3', label: 'Surah', max: 10 }] },
     ],
   },
@@ -23,8 +28,8 @@ const UNIT_TEST_GROUPS = {
     classes: ['3rd', '4th', '5th'],
     subjects: [
       wo('ENG', 20, 10), wo('HINDI', 20, 10), wo('MARATHI', 20, 10), wo('MATHS', 20, 10),
-      wo('EVS-1', 20, 10), wo('EVS-2', 20, 10), wo('COMPUTER', 20, 10), wo('DRAWING', 20, 10),
-      wo('CRAFT', 20, 10), wo('ISLAMIC', 20, 10), wo('ARABIC WRITING', 20, 10),
+      wo('EVS-1', 20, 10), wo('EVS-2', 20, 10), wo('COMPUTER', 20, 10), single('DRAWING', 30),
+      single('CRAFT', 30), wo('ISLAMIC', 20, 10), wo('ARABIC WRITING', 20, 10),
       { name: 'ARABIC ORAL', parts: [{ key: 'part1', label: 'Qaida', max: 10 }, { key: 'part2', label: 'Dua', max: 10 }, { key: 'part3', label: 'Surah', max: 10 }] },
     ],
   },
