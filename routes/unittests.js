@@ -16,6 +16,14 @@ function single(name, max) {
 }
 
 const UNIT_TEST_GROUPS = {
+  grpLKG: {
+    classes: ['LKG'],
+    subjects: [
+      wo('ENG', 20, 5), wo('MATHS', 20, 5), wo('G.K', 20, 5), wo('EVS', 20, 5), wo('RHYMES', 20, 5),
+      single('DRAWING', 25), single('CRAFT', 25), wo('ISLAMIC', 20, 5), wo('ARABIC WRITING', 20, 5),
+      { name: 'ARABIC ORAL', parts: [{ key: 'part1', label: 'Qaida', max: 5 }, { key: 'part2', label: 'Dua', max: 10 }, { key: 'part3', label: 'Surah', max: 10 }] },
+    ],
+  },
   grp12: {
     classes: ['1st', '2nd'],
     subjects: [
