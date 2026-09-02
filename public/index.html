@@ -914,16 +914,14 @@ async function saveUnitTests() {
 }
 
 // ── Unit Test Report (classwise Academic / Islamic report, print) ──
-let utrCache = null; // { list, subjects, year, testName, school, cls, reportType, remarksMap }
+let utrCache = null; // { list, subjects, year, testName, school, cls, reportType }
 const UTR_ISLAMIC_NAMES = ['ISLAMIC', 'ARABIC WRITING', 'ARABIC ORAL'];
 const UTR_REPORT_LABELS = { academic: 'Academic Report', islamic: 'Islamic Report' };
-const UTR_REMARK_OPTIONS = ['Excellent', 'Very Good', 'Good', 'Satisfactory', 'Needs Improvement'];
-
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
-// Standard 9-point grading scale (CBSE-style) applied to the percentage.
+// School's 8-point grading scale applied to the percentage.
 function utrGrade(pct) {
   const p = parseFloat(pct);
   if (isNaN(p)) return '—';
@@ -934,9 +932,20 @@ function utrGrade(pct) {
   if (p >= 51) return 'C1';
   if (p >= 41) return 'C2';
   if (p >= 33) return 'D';
-  if (p >= 21) return 'E1';
-  return 'E2';
+  return 'E';
 }
+// Remark text is derived from the grade, not typed by the teacher.
+const UTR_GRADE_REMARKS = {
+  'A1': 'Outstanding performance',
+  'A2': 'Excellent performance',
+  'B1': 'Very good performance',
+  'B2': 'Good performance',
+  'C1': 'Above average performance',
+  'C2': 'Average performance',
+  'D':  'Marginal/Passing grade',
+  'E':  'Needs improvement (Failed)',
+};
+function utrGradeRemark(pct) { return UTR_GRADE_REMARKS[utrGrade(pct)] || '—'; }
 function utrSubjectTotal(s) { return s.parts.reduce((a,p) => a + p.max, 0); }
 function utrMaxParts(subjects) { return Math.max(...subjects.map(s => s.parts.length)); }
 function utrRowLabel(subjects, rowIdx, maxParts) {
@@ -952,11 +961,6 @@ function utrRowLabel(subjects, rowIdx, maxParts) {
   const label = sameLabel ? partsAtIdx[0].label : `Part ${rowIdx+1}`;
   return sameLabel && sameMax ? `${label}  ${partsAtIdx[0].max}` : label;
 }
-function utrRemarkOptionsHtml(selected) {
-  return `<option value="">— Select —</option>` +
-    UTR_REMARK_OPTIONS.map(o => `<option value="${escapeHtml(o)}" ${o===selected?'selected':''}>${escapeHtml(o)}</option>`).join('');
-}
-
 function loadUtrClasses() {
   const school = document.getElementById('utr-school').value;
   const classes = getClassesForSchool(school);
@@ -976,16 +980,14 @@ async function loadUtReport() {
   if (!school || !cls) { area.innerHTML = '<p style="color:#718096;">Select a school and class.</p>'; return; }
   area.innerHTML = '<p style="color:#718096;">Loading…</p>';
 
-  let cdata = { subjects: [] }, marks = [], remarks = [];
+  let cdata = { subjects: [] }, marks = [];
   try {
-    const [cr, mr, rr] = await Promise.all([
+    const [cr, mr] = await Promise.all([
       fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`),
       fetch('/api/unittests?' + new URLSearchParams({ school, class_name: cls, test_name: testName, academic_year: year })),
-      fetch('/api/unittests/remarks?' + new URLSearchParams({ school, class_name: cls, test_name: testName, academic_year: year, report_type: reportType })),
     ]);
     if (cr.ok) cdata = await cr.json();
     if (mr.ok) marks = await mr.json();
-    if (rr.ok) remarks = await rr.json();
   } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
 
   const allSubjects = cdata.subjects || [];
@@ -1002,10 +1004,8 @@ async function loadUtReport() {
   });
   const list = Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||9999)-(parseInt(b.roll_no)||9999) || (a.name||'').localeCompare(b.name||''));
   if (!list.length) { area.innerHTML = '<p style="color:#718096;">No marks saved yet for this school, class, year and test.</p>'; return; }
-  const remarksMap = {};
-  remarks.forEach(r => { remarksMap[r.student_id] = r.remarks || ''; });
 
-  utrCache = { list, subjects, year, testName, school, cls, reportType, remarksMap };
+  utrCache = { list, subjects, year, testName, school, cls, reportType };
   renderUtrTable();
 }
 
@@ -1027,7 +1027,7 @@ function utrStudentTotals(st, subjects, grandMax) {
 // Desktop: subjects across the top, rowspan cells for #/Roll/Name/Total/%/
 // Grade/Remarks — the school's printed marking-sheet layout, horizontally
 // scrollable with pinned identity columns.
-function buildUtrTableHtml(list, subjects, remarksMap) {
+function buildUtrTableHtml(list, subjects) {
   const grandMax = subjects.reduce((a,s) => a + utrSubjectTotal(s), 0);
   const maxParts = utrMaxParts(subjects);
   const rowsCount = maxParts + 1;
@@ -1058,10 +1058,7 @@ function buildUtrTableHtml(list, subjects, remarksMap) {
       if (isTotalRow) {
         bodyHtml += `<td style="font-weight:700;">${total}/${grandMax}</td><td>${pct}%</td>`;
         bodyHtml += `<td style="font-weight:700; text-align:center;">${utrGrade(pct)}</td>`;
-        bodyHtml += `<td style="white-space:nowrap;">
-          <select id="utr-remark-${st.student_id}" style="width:auto; font-size:12px;">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select>
-          <button style="margin-left:4px; font-size:12px;" onclick="saveUtrRemark(${st.student_id}, document.getElementById('utr-remark-${st.student_id}'), this)">💾 Save</button>
-        </td>`;
+        bodyHtml += `<td>${escapeHtml(utrGradeRemark(pct))}</td>`;
       } else {
         bodyHtml += `<td></td><td></td><td></td><td></td>`;
       }
@@ -1082,7 +1079,7 @@ function buildUtrTableHtml(list, subjects, remarksMap) {
 // its component breakdown as plain lines (no rowspan needed since each
 // card is independent), then the grand total/%/grade/remarks at the
 // bottom. Sorted by roll number, same order as the desktop table.
-function buildUtrCardsHtml(list, subjects, remarksMap) {
+function buildUtrCardsHtml(list, subjects) {
   const grandMax = subjects.reduce((a,s) => a + utrSubjectTotal(s), 0);
   const cards = list.map((st, idx) => {
     const { total, totalPerSubject, pct } = utrStudentTotals(st, subjects, grandMax);
@@ -1106,9 +1103,7 @@ function buildUtrCardsHtml(list, subjects, remarksMap) {
         <div class="utr-card-part"><span>Grand Total</span><span>${total} / ${grandMax}</span></div>
         <div class="utr-card-part"><span>Percentage</span><span>${pct}%</span></div>
         <div class="utr-card-part"><span>Grade</span><span>${utrGrade(pct)}</span></div>
-        <label style="display:block; margin-top:8px;">Remarks</label>
-        <select id="utr-remark-card-${st.student_id}">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select>
-        <button style="margin-top:6px;" onclick="saveUtrRemark(${st.student_id}, document.getElementById('utr-remark-card-${st.student_id}'), this)">💾 Save</button>
+        <div class="utr-card-part"><span>Remarks</span><span>${escapeHtml(utrGradeRemark(pct))}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -1118,9 +1113,9 @@ function buildUtrCardsHtml(list, subjects, remarksMap) {
 function renderUtrTable() {
   const area = document.getElementById('utr-area');
   if (!utrCache) return;
-  const { list, subjects, reportType, remarksMap } = utrCache;
+  const { list, subjects, reportType } = utrCache;
   const isMobile = window.innerWidth <= 720;
-  const bodyContent = isMobile ? buildUtrCardsHtml(list, subjects, remarksMap) : buildUtrTableHtml(list, subjects, remarksMap);
+  const bodyContent = isMobile ? buildUtrCardsHtml(list, subjects) : buildUtrTableHtml(list, subjects);
 
   area.innerHTML = `
     <div class="card">
@@ -1129,50 +1124,17 @@ function renderUtrTable() {
     </div>`;
 }
 
-async function saveUtrRemark(studentId, selectEl, btnEl) {
-  if (!utrCache) return;
-  const { year, testName, reportType } = utrCache;
-  const originalLabel = btnEl ? btnEl.textContent : '';
-  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Saving…'; }
-  try {
-    const r = await fetch('/api/unittests/remarks', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-      student_id: studentId, academic_year: year, test_name: testName, report_type: reportType, remarks: selectEl.value
-    })});
-    if (!r.ok) {
-      const d = await r.json();
-      if (btnEl) { btnEl.textContent = originalLabel; btnEl.disabled = false; }
-      alert(d.error || 'Save failed.');
-      return;
-    }
-    utrCache.remarksMap[studentId] = selectEl.value;
-    if (btnEl) {
-      btnEl.textContent = '✔ Saved';
-      setTimeout(() => { btnEl.textContent = originalLabel; btnEl.disabled = false; }, 1200);
-    }
-  } catch(e) {
-    if (btnEl) { btnEl.textContent = originalLabel; btnEl.disabled = false; }
-    alert('Network error.');
-  }
-}
-
 function printUtReport() {
   if (!utrCache || !utrCache.list.length) { alert('Load a report first.'); return; }
-  const { list, subjects, remarksMap, school, cls, year, testName, reportType } = utrCache;
+  const { list, subjects, school, cls, year, testName, reportType } = utrCache;
 
   // Built straight from utrCache rather than cloning whatever's on screen —
   // the on-screen view switches between a table (desktop) and cards
   // (mobile), but print should always be the same table layout regardless
-  // of which device saved the marks. Remarks render as plain text since a
-  // live dropdown has no place on a printed page.
-  const tableHtml = buildUtrTableHtml(list, subjects, remarksMap);
+  // of which device saved the marks.
+  const tableHtml = buildUtrTableHtml(list, subjects);
   const container = document.createElement('div');
   container.innerHTML = tableHtml;
-  container.querySelectorAll('select').forEach(sel => {
-    const span = document.createElement('span');
-    span.textContent = sel.value;
-    sel.replaceWith(span);
-  });
-  container.querySelectorAll('button').forEach(btn => btn.remove());
 
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>${escapeHtml(testName)} — ${escapeHtml(UTR_REPORT_LABELS[reportType])}</title>
