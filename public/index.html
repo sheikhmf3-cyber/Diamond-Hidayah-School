@@ -1058,7 +1058,10 @@ function buildUtrTableHtml(list, subjects, remarksMap) {
       if (isTotalRow) {
         bodyHtml += `<td style="font-weight:700;">${total}/${grandMax}</td><td>${pct}%</td>`;
         bodyHtml += `<td style="font-weight:700; text-align:center;">${utrGrade(pct)}</td>`;
-        bodyHtml += `<td><select onchange="saveUtrRemark(${st.student_id}, this)" style="width:100%; font-size:12px;">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select></td>`;
+        bodyHtml += `<td style="white-space:nowrap;">
+          <select id="utr-remark-${st.student_id}" style="width:auto; font-size:12px;">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select>
+          <button style="margin-left:4px; font-size:12px;" onclick="saveUtrRemark(${st.student_id}, document.getElementById('utr-remark-${st.student_id}'), this)">💾 Save</button>
+        </td>`;
       } else {
         bodyHtml += `<td></td><td></td><td></td><td></td>`;
       }
@@ -1104,7 +1107,8 @@ function buildUtrCardsHtml(list, subjects, remarksMap) {
         <div class="utr-card-part"><span>Percentage</span><span>${pct}%</span></div>
         <div class="utr-card-part"><span>Grade</span><span>${utrGrade(pct)}</span></div>
         <label style="display:block; margin-top:8px;">Remarks</label>
-        <select onchange="saveUtrRemark(${st.student_id}, this)">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select>
+        <select id="utr-remark-card-${st.student_id}">${utrRemarkOptionsHtml(remarksMap[st.student_id]||'')}</select>
+        <button style="margin-top:6px;" onclick="saveUtrRemark(${st.student_id}, document.getElementById('utr-remark-card-${st.student_id}'), this)">💾 Save</button>
       </div>
     </div>`;
   }).join('');
@@ -1125,19 +1129,30 @@ function renderUtrTable() {
     </div>`;
 }
 
-async function saveUtrRemark(studentId, selectEl) {
+async function saveUtrRemark(studentId, selectEl, btnEl) {
   if (!utrCache) return;
   const { year, testName, reportType } = utrCache;
+  const originalLabel = btnEl ? btnEl.textContent : '';
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Saving…'; }
   try {
     const r = await fetch('/api/unittests/remarks', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
       student_id: studentId, academic_year: year, test_name: testName, report_type: reportType, remarks: selectEl.value
     })});
-    if (!r.ok) { const d = await r.json(); alert(d.error || 'Save failed.'); return; }
+    if (!r.ok) {
+      const d = await r.json();
+      if (btnEl) { btnEl.textContent = originalLabel; btnEl.disabled = false; }
+      alert(d.error || 'Save failed.');
+      return;
+    }
     utrCache.remarksMap[studentId] = selectEl.value;
-    selectEl.style.transition = 'background .3s';
-    selectEl.style.background = '#f0fff4';
-    setTimeout(() => { selectEl.style.background = ''; }, 800);
-  } catch(e) { alert('Network error.'); }
+    if (btnEl) {
+      btnEl.textContent = '✔ Saved';
+      setTimeout(() => { btnEl.textContent = originalLabel; btnEl.disabled = false; }, 1200);
+    }
+  } catch(e) {
+    if (btnEl) { btnEl.textContent = originalLabel; btnEl.disabled = false; }
+    alert('Network error.');
+  }
 }
 
 function printUtReport() {
@@ -1157,6 +1172,7 @@ function printUtReport() {
     span.textContent = sel.value;
     sel.replaceWith(span);
   });
+  container.querySelectorAll('button').forEach(btn => btn.remove());
 
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>${escapeHtml(testName)} — ${escapeHtml(UTR_REPORT_LABELS[reportType])}</title>
