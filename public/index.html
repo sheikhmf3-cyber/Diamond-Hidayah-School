@@ -18,6 +18,10 @@
   .btn-primary { width:100%; padding:11px; background:#1e3a5f; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
   .btn-primary:hover { background:#2d6a9f; }
   .error-msg { color:#e53e3e; font-size:13px; margin-top:10px; text-align:center; }
+  .success-msg { color:#1B6B3A; background:#e8f6ee; border:1px solid #7dc99a; border-radius:8px; padding:10px 12px; font-size:13px; margin-top:10px; text-align:center; }
+  .switch-link { text-align:center; font-size:13px; color:#718096; margin-top:16px; margin-bottom:0; }
+  .switch-link a { color:#2d6a9f; font-weight:600; text-decoration:none; }
+  .switch-link a:hover { text-decoration:underline; }
 
   #app-page { display:none; }
   .topbar { background:#1e3a5f; color:#fff; padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:56px; }
@@ -159,7 +163,7 @@
 
 <!-- LOGIN -->
 <div id="login-page">
-  <div class="login-box">
+  <div class="login-box" id="login-box">
     <h1>🏫 Diamond / Hidayah School</h1>
     <p>Online Teacher Portal</p>
     <label>Username</label>
@@ -168,6 +172,23 @@
     <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">
     <button class="btn-primary" onclick="doLogin()">Login</button>
     <div id="login-error" class="error-msg"></div>
+    <p class="switch-link">New teacher? <a href="#" onclick="showRegisterBox();return false;">Register for an account</a></p>
+  </div>
+  <div class="login-box" id="register-box" style="display:none;">
+    <h1>🏫 Diamond / Hidayah School</h1>
+    <p>Teacher Registration</p>
+    <label>Full Name</label>
+    <input type="text" id="reg-name" placeholder="Full name">
+    <label>Choose a Username</label>
+    <input type="text" id="reg-username" placeholder="Username" autocomplete="username">
+    <label>Choose a Password</label>
+    <input type="password" id="reg-password" placeholder="Password" autocomplete="new-password">
+    <label>Class(es) You Teach (comma separated, e.g. 8th, 9th)</label>
+    <input type="text" id="reg-classes" placeholder="e.g. 8th, 9th">
+    <button class="btn-primary" onclick="doRegister()">Submit Registration</button>
+    <div id="register-error" class="error-msg"></div>
+    <div id="register-success" class="success-msg" style="display:none;"></div>
+    <p class="switch-link">Already approved? <a href="#" onclick="showLoginBox();return false;">Log in</a></p>
   </div>
 </div>
 
@@ -508,6 +529,40 @@ async function doLogin() {
     currentUser = d.user;
     showApp();
   } catch(e) { document.getElementById('login-error').textContent = 'Network error. Try again.'; }
+}
+
+function showRegisterBox() {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('register-box').style.display = 'block';
+  document.getElementById('login-error').textContent = '';
+}
+function showLoginBox() {
+  document.getElementById('register-box').style.display = 'none';
+  document.getElementById('login-box').style.display = 'block';
+  document.getElementById('register-error').textContent = '';
+  document.getElementById('register-success').style.display = 'none';
+}
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const classes = document.getElementById('reg-classes').value.trim();
+  const errEl = document.getElementById('register-error');
+  const okEl = document.getElementById('register-success');
+  errEl.textContent = ''; okEl.style.display = 'none';
+  if (!name || !username || !password) { errEl.textContent = 'Name, username and password are required.'; return; }
+  if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
+  try {
+    const r = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, username, password, classes }) });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Registration failed.'; return; }
+    okEl.textContent = d.message || 'Registered. Pending admin approval.';
+    okEl.style.display = 'block';
+    document.getElementById('reg-name').value = '';
+    document.getElementById('reg-username').value = '';
+    document.getElementById('reg-password').value = '';
+    document.getElementById('reg-classes').value = '';
+  } catch(e) { errEl.textContent = 'Network error. Try again.'; }
 }
 
 async function doLogout() {
@@ -1277,7 +1332,9 @@ function showAlert(id, msg, type) {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') doLogin();
+  if (e.key !== 'Enter' || document.getElementById('login-page').style.display === 'none') return;
+  if (document.getElementById('register-box').style.display !== 'none') doRegister();
+  else doLogin();
 });
 
 // Set today's date as default for diary

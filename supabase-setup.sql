@@ -144,3 +144,20 @@ CREATE TABLE IF NOT EXISTS cloud_unit_test_remarks (
   updated_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(student_id, academic_year, test_name, report_type)
 );
+
+-- ============================================================
+-- New-teacher registrations submitted from the online portal — staged
+-- here (NOT written straight into cloud_users, which uses local-assigned
+-- ids) until the local sync agent pulls them into the local `users` table
+-- for the admin's usual local approval flow.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cloud_teacher_registrations (
+  id SERIAL PRIMARY KEY,
+  local_id INTEGER DEFAULT NULL,
+  name TEXT NOT NULL,
+  username TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  classes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  synced_at TIMESTAMPTZ DEFAULT NULL
+);
