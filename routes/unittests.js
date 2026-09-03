@@ -14,20 +14,24 @@ function wo(name, writingMax, oralMax) {
 function single(name, max) {
   return { name, parts: [{ key: 'part1', label: 'Writing', max }] };
 }
+// Some LKG/UKG subjects are tested orally only — no written component.
+function oral(name, max) {
+  return { name, parts: [{ key: 'part1', label: 'Oral', max }] };
+}
 
 const UNIT_TEST_GROUPS = {
   grpLKG: {
     classes: ['LKG'],
     subjects: [
-      wo('ENG', 20, 5), wo('MATHS', 20, 5), wo('G.K', 20, 5), wo('EVS', 20, 5), wo('RHYMES', 20, 5),
-      single('DRAWING', 25), single('CRAFT', 25), wo('ISLAMIC', 20, 5), wo('ARABIC WRITING', 20, 5),
+      wo('ENG', 20, 5), wo('MATHS', 20, 5), oral('G.K', 25), wo('EVS', 20, 5), oral('RHYMES', 25),
+      single('DRAWING', 25), single('CRAFT', 25), oral('ISLAMIC', 25), wo('ARABIC WRITING', 20, 5),
       { name: 'ARABIC ORAL', parts: [{ key: 'part1', label: 'Qaida', max: 5 }, { key: 'part2', label: 'Dua', max: 10 }, { key: 'part3', label: 'Surah', max: 10 }] },
     ],
   },
   grpUKG: {
     classes: ['UKG'],
     subjects: [
-      wo('ENG', 20, 5), wo('MARATHI', 20, 5), wo('MATHS', 20, 5), wo('G.K', 20, 5), wo('EVS', 20, 5), wo('RHYMES', 20, 5),
+      wo('ENG', 20, 5), wo('MARATHI', 20, 5), wo('MATHS', 20, 5), oral('G.K', 25), wo('EVS', 20, 5), oral('RHYMES', 25),
       single('DRAWING', 25), single('CRAFT', 25), wo('ISLAMIC', 20, 5), wo('ARABIC WRITING', 20, 5),
       { name: 'ARABIC ORAL', parts: [{ key: 'part1', label: 'Qaida', max: 5 }, { key: 'part2', label: 'Dua', max: 10 }, { key: 'part3', label: 'Surah', max: 10 }] },
     ],
