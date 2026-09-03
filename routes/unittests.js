@@ -96,32 +96,45 @@ function clampMark(val, max) {
 const ALL_PART_KEYS = ['part1', 'part2', 'part3', 'part4', 'part5'];
 
 // ── GET /api/unittests — fetch marks for a class+test ─────────
+// Filters by student first (a small, bounded set for one class) rather
+// than fetching every mark for the test/year across the whole school and
+// filtering in JS — that school-wide fetch can exceed Supabase's default
+// 1000-row cap as the total mark count grows, silently dropping rows past
+// the cutoff and making some students' marks look "missing" even though
+// they saved fine.
 router.get('/', async (req, res) => {
   const { school, class_name, test_name, academic_year } = req.query;
   if (!test_name || !academic_year) return res.status(400).json({ error: 'test_name and academic_year required.' });
 
-  let query = supabase
-    .from('cloud_unit_test_marks')
-    .select('*, cloud_students(name, roll_no, class_name, school)')
-    .eq('test_name', test_name)
-    .eq('academic_year', academic_year);
+  let studentQuery = supabase.from('cloud_students').select('id,name,roll_no,class_name,school');
+  if (school) studentQuery = studentQuery.eq('school', school);
+  if (class_name) studentQuery = studentQuery.eq('class_name', class_name);
+  const { data: students, error: studentErr } = await studentQuery;
+  if (studentErr) return res.status(500).json({ error: studentErr.message });
+  if (!students || !students.length) return res.json([]);
 
-  const { data, error } = await query;
+  const studentMap = {};
+  students.forEach(s => { studentMap[s.id] = s; });
+
+  const { data, error } = await supabase
+    .from('cloud_unit_test_marks')
+    .select('*')
+    .eq('test_name', test_name)
+    .eq('academic_year', academic_year)
+    .in('student_id', students.map(s => s.id));
   if (error) return res.status(500).json({ error: error.message });
 
-  let rows = data || [];
-  if (school) rows = rows.filter(r => r.cloud_students?.school === school);
-  if (class_name) rows = rows.filter(r => r.cloud_students?.class_name === class_name);
-
   // Flatten
-  const flat = rows.map(r => ({
-    ...r,
-    student_name: r.cloud_students?.name,
-    roll_no: r.cloud_students?.roll_no,
-    class_name: r.cloud_students?.class_name,
-    school: r.cloud_students?.school,
-    cloud_students: undefined
-  }));
+  const flat = (data || []).map(r => {
+    const s = studentMap[r.student_id];
+    return {
+      ...r,
+      student_name: s?.name,
+      roll_no: s?.roll_no,
+      class_name: s?.class_name,
+      school: s?.school,
+    };
+  });
 
   res.json(flat);
 });
@@ -204,18 +217,22 @@ router.get('/remarks', async (req, res) => {
   const { school, class_name, academic_year, test_name, report_type } = req.query;
   if (!academic_year || !test_name || !report_type) return res.status(400).json({ error: 'academic_year, test_name and report_type required.' });
 
+  let studentQuery = supabase.from('cloud_students').select('id');
+  if (school) studentQuery = studentQuery.eq('school', school);
+  if (class_name) studentQuery = studentQuery.eq('class_name', class_name);
+  const { data: students, error: studentErr } = await studentQuery;
+  if (studentErr) return res.status(500).json({ error: studentErr.message });
+  if (!students || !students.length) return res.json([]);
+
   const { data: remarks, error } = await supabase
     .from('cloud_unit_test_remarks')
-    .select('*, cloud_students(school, class_name)')
+    .select('student_id,remarks')
     .eq('academic_year', academic_year)
     .eq('test_name', test_name)
-    .eq('report_type', report_type);
+    .eq('report_type', report_type)
+    .in('student_id', students.map(s => s.id));
   if (error) return res.status(500).json({ error: error.message });
-
-  let rows = remarks || [];
-  if (school) rows = rows.filter(r => r.cloud_students?.school === school);
-  if (class_name) rows = rows.filter(r => r.cloud_students?.class_name === class_name);
-  res.json(rows.map(r => ({ student_id: r.student_id, remarks: r.remarks })));
+  res.json(remarks || []);
 });
 
 // POST /api/unittests/remarks — save (create or update) one student's remark
