@@ -422,7 +422,7 @@
           </div>
           <div class="form-group">
             <label>Class</label>
-            <select id="utr-class">
+            <select id="utr-class" onchange="updateUtrCombinedOption()">
               <option value="">— Select Class —</option>
             </select>
           </div>
@@ -1030,9 +1030,22 @@ function loadUtrClasses() {
   sel.innerHTML = '<option value="">— Select Class —</option>';
   classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
   document.getElementById('utr-area').innerHTML = '';
+  updateUtrCombinedOption(); // class reset to blank, so this re-hides Combined until a class is picked
 }
 
 const UTR_PRE_PRIMARY_CLASSES = ['Nursery', 'LKG', 'UKG'];
+
+// Run on class selection (not just when Load Report is clicked) so the
+// Combined option appears the moment LKG/UKG/Nursery is picked, instead of
+// only after the first report load.
+function updateUtrCombinedOption() {
+  const cls = document.getElementById('utr-class').value;
+  const combinedOpt = document.getElementById('utr-report-type-combined');
+  const isPrePrimary = UTR_PRE_PRIMARY_CLASSES.includes(cls);
+  combinedOpt.hidden = !isPrePrimary;
+  const typeSel = document.getElementById('utr-report-type');
+  if (!isPrePrimary && typeSel.value === 'combined') typeSel.value = 'academic';
+}
 
 async function loadUtReport() {
   const school = document.getElementById('utr-school').value;
@@ -1040,13 +1053,8 @@ async function loadUtReport() {
   const testName = document.getElementById('utr-test').value;
   const year = document.getElementById('utr-year').value;
 
-  // The combined Academic+Islamic view only makes sense for LKG/UKG, whose
-  // subject lists are small enough to show together in one total/%.
-  const combinedOpt = document.getElementById('utr-report-type-combined');
-  const isPrePrimary = UTR_PRE_PRIMARY_CLASSES.includes(cls);
-  combinedOpt.hidden = !isPrePrimary;
+  updateUtrCombinedOption();
   const typeSel = document.getElementById('utr-report-type');
-  if (!isPrePrimary && typeSel.value === 'combined') typeSel.value = 'academic';
 
   const reportType = typeSel.value;
   const area = document.getElementById('utr-area');
