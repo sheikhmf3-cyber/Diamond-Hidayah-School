@@ -476,7 +476,7 @@
           </div>
           <div class="form-group">
             <label>Class</label>
-            <select id="top5-class">
+            <select id="top5-class" onchange="updateTop5CombinedOption()">
               <option value="">— Select Class —</option>
             </select>
           </div>
@@ -500,6 +500,7 @@
             <select id="top5-report-type">
               <option value="academic">📘 Academic</option>
               <option value="islamic">🕌 Islamic</option>
+              <option value="combined" id="top5-report-type-combined" hidden>📗 Combined</option>
             </select>
           </div>
         </div>
@@ -1238,7 +1239,16 @@ function printUtReport() {
 // isn't synced to the cloud portal, so Term 1/Term 2 aren't available
 // here the way they are on the local system) ───────────────────
 let top5Cache = null; // { school, cls, test, year, reportType, subjects, list }
-const TOP5_REPORT_LABELS = { academic: 'Academic Report', islamic: 'Islamic Report' };
+const TOP5_REPORT_LABELS = { academic: 'Academic Report', islamic: 'Islamic Report', combined: 'Combined Report' };
+const TOP5_PRE_PRIMARY_CLASSES = ['Nursery', 'LKG', 'UKG'];
+function updateTop5CombinedOption() {
+  const cls = document.getElementById('top5-class').value;
+  const combinedOpt = document.getElementById('top5-report-type-combined');
+  const isPrePrimary = TOP5_PRE_PRIMARY_CLASSES.includes(cls);
+  combinedOpt.hidden = !isPrePrimary;
+  const typeSel = document.getElementById('top5-report-type');
+  if (!isPrePrimary && typeSel.value === 'combined') typeSel.value = 'academic';
+}
 
 function loadTop5Classes() {
   const school = document.getElementById('top5-school').value;
@@ -1247,6 +1257,7 @@ function loadTop5Classes() {
   sel.innerHTML = '<option value="">— Select Class —</option>';
   classes.forEach(cn => { const o = document.createElement('option'); o.value=cn; o.textContent=cn; sel.appendChild(o); });
   document.getElementById('top5-area').innerHTML = '';
+  updateTop5CombinedOption();
 }
 
 async function loadTop5() {
@@ -1270,9 +1281,7 @@ async function loadTop5() {
   } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
 
   const allSubjects = cdata.subjects || [];
-  const subjects = reportType === 'islamic'
-    ? allSubjects.filter(s => UTR_ISLAMIC_NAMES.includes(s.name))
-    : allSubjects.filter(s => !UTR_ISLAMIC_NAMES.includes(s.name));
+  const subjects = utrSubjectsForReportType(allSubjects, reportType);
   if (!subjects.length) { area.innerHTML = `<p style="color:#718096;">This class has no subjects in the ${TOP5_REPORT_LABELS[reportType]}.</p>`; return; }
 
   const subjectNames = new Set(subjects.map(s => s.name));
