@@ -20,6 +20,15 @@ function oral(name, max) {
 }
 
 const UNIT_TEST_GROUPS = {
+  grpNursery: {
+    classes: ['Nursery'],
+    subjects: [
+      wo('ENG', 20, 5), wo('MATHS', 20, 5), wo('ARABIC WRITING', 20, 5),
+      oral('RHYMES', 25), single('DRAWING', 25), single('CRAFT', 25), oral('PLAY & LEARN', 25),
+      { name: 'ARABIC ORAL', parts: [{ key: 'part1', label: 'Surah', max: 10 }, { key: 'part2', label: 'Qaida', max: 10 }, { key: 'part3', label: 'Dua', max: 5 }] },
+      oral('CONVERSATION', 25), oral('ISLAMIC', 25),
+    ],
+  },
   grpLKG: {
     classes: ['LKG'],
     subjects: [

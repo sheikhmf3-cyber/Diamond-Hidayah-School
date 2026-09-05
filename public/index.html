@@ -451,6 +451,7 @@
             <select id="utr-report-type">
               <option value="academic">📘 Academic Report</option>
               <option value="islamic">🕌 Islamic Report</option>
+              <option value="combined" id="utr-report-type-combined" hidden>📗 Combined Report</option>
             </select>
           </div>
         </div>
@@ -971,7 +972,13 @@ async function saveUnitTests() {
 // ── Unit Test Report (classwise Academic / Islamic report, print) ──
 let utrCache = null; // { list, subjects, year, testName, school, cls, reportType }
 const UTR_ISLAMIC_NAMES = ['ISLAMIC', 'ARABIC WRITING', 'ARABIC ORAL'];
-const UTR_REPORT_LABELS = { academic: 'Academic Report', islamic: 'Islamic Report' };
+const UTR_REPORT_LABELS = { academic: 'Academic Report', islamic: 'Islamic Report', combined: 'Combined Report' };
+function utrSubjectsForReportType(allSubjects, reportType) {
+  if (reportType === 'combined') return allSubjects;
+  return reportType === 'islamic'
+    ? allSubjects.filter(s => UTR_ISLAMIC_NAMES.includes(s.name))
+    : allSubjects.filter(s => !UTR_ISLAMIC_NAMES.includes(s.name));
+}
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
@@ -1025,12 +1032,23 @@ function loadUtrClasses() {
   document.getElementById('utr-area').innerHTML = '';
 }
 
+const UTR_PRE_PRIMARY_CLASSES = ['LKG', 'UKG'];
+
 async function loadUtReport() {
   const school = document.getElementById('utr-school').value;
   const cls = document.getElementById('utr-class').value;
   const testName = document.getElementById('utr-test').value;
   const year = document.getElementById('utr-year').value;
-  const reportType = document.getElementById('utr-report-type').value;
+
+  // The combined Academic+Islamic view only makes sense for LKG/UKG, whose
+  // subject lists are small enough to show together in one total/%.
+  const combinedOpt = document.getElementById('utr-report-type-combined');
+  const isPrePrimary = UTR_PRE_PRIMARY_CLASSES.includes(cls);
+  combinedOpt.hidden = !isPrePrimary;
+  const typeSel = document.getElementById('utr-report-type');
+  if (!isPrePrimary && typeSel.value === 'combined') typeSel.value = 'academic';
+
+  const reportType = typeSel.value;
   const area = document.getElementById('utr-area');
   if (!school || !cls) { area.innerHTML = '<p style="color:#718096;">Select a school and class.</p>'; return; }
   area.innerHTML = '<p style="color:#718096;">Loading…</p>';
@@ -1046,9 +1064,7 @@ async function loadUtReport() {
   } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
 
   const allSubjects = cdata.subjects || [];
-  const subjects = reportType === 'islamic'
-    ? allSubjects.filter(s => UTR_ISLAMIC_NAMES.includes(s.name))
-    : allSubjects.filter(s => !UTR_ISLAMIC_NAMES.includes(s.name));
+  const subjects = utrSubjectsForReportType(allSubjects, reportType);
 
   if (!subjects.length) { area.innerHTML = `<p style="color:#718096;">This class has no subjects in the ${UTR_REPORT_LABELS[reportType]}.</p>`; return; }
 
