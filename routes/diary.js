@@ -1,6 +1,7 @@
 const express = require('express');
 const supabase = require('../db/supabase');
 const { requireLogin } = require('../middleware/auth');
+const { isClassAllowed } = require('../utils/classMatch');
 const router = express.Router();
 router.use(requireLogin);
 
@@ -56,7 +57,7 @@ router.post('/', async (req, res) => {
       .eq('id', student_id)
       .single();
     if (!student) return res.status(404).json({ error: 'Student not found.' });
-    const allowed = user.classes.some(c => c.school === student.school && c.class_name === student.class_name);
+    const allowed = isClassAllowed(user.classes, student.school, student.class_name);
     if (!allowed) return res.status(403).json({ error: 'Not authorized for this student.' });
   }
 
@@ -102,7 +103,7 @@ router.post('/bulk', async (req, res) => {
         .eq('id', en.student_id)
         .single();
       if (!student) { skipped++; continue; }
-      const allowed = user.classes.some(c => c.school === student.school && c.class_name === student.class_name);
+      const allowed = isClassAllowed(user.classes, student.school, student.class_name);
       if (!allowed) { skipped++; continue; }
     }
 

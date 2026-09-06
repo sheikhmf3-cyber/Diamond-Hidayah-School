@@ -1,6 +1,7 @@
 const express = require('express');
 const supabase = require('../db/supabase');
 const { requireLogin } = require('../middleware/auth');
+const { isClassAllowed } = require('../utils/classMatch');
 const router = express.Router();
 router.use(requireLogin);
 
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
   if (user.role !== 'admin') {
     if (!school || !class_name) return res.json([]);
     // Verify teacher is assigned to this school+class
-    const allowed = user.classes.some(c => c.school === school && c.class_name === class_name);
+    const allowed = isClassAllowed(user.classes, school, class_name);
     if (!allowed) return res.status(403).json({ error: 'Not authorized for this class.' });
   }
 
