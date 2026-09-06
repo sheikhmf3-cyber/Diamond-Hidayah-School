@@ -164,16 +164,19 @@ router.post('/bulk', async (req, res) => {
 
   const user = req.session.user;
   let saved = 0, skipped = 0;
+  const skipReasons = [];
 
   for (const en of entries) {
-    if (!en.student_id || !en.test_name || !en.subject || !en.academic_year) { skipped++; continue; }
+    if (!en.student_id || !en.test_name || !en.subject || !en.academic_year) {
+      skipped++; skipReasons.push({ student_id: en.student_id, subject: en.subject, reason: 'missing required fields' }); continue;
+    }
 
     // Auth check for teachers
     if (user.role !== 'admin') {
       const { data: student } = await supabase.from('cloud_students').select('school,class_name').eq('id', en.student_id).single();
-      if (!student) { skipped++; continue; }
+      if (!student) { skipped++; skipReasons.push({ student_id: en.student_id, subject: en.subject, reason: 'student not found' }); continue; }
       const allowed = user.classes.some(c => c.school === student.school && c.class_name === student.class_name);
-      if (!allowed) { skipped++; continue; }
+      if (!allowed) { skipped++; skipReasons.push({ student_id: en.student_id, subject: en.subject, reason: `not authorized for ${student.school}/${student.class_name}` }); continue; }
     }
 
     // Get class for clamping
@@ -215,10 +218,10 @@ router.post('/bulk', async (req, res) => {
       .from('cloud_unit_test_marks')
       .upsert(row, { onConflict: 'student_id,academic_year,test_name,subject' });
 
-    if (!error) saved++; else { console.error('UT upsert error:', error.message); skipped++; }
+    if (!error) saved++; else { console.error('UT upsert error:', error.message); skipped++; skipReasons.push({ student_id: en.student_id, subject: en.subject, reason: error.message }); }
   }
 
-  res.json({ ok: true, saved, skipped });
+  res.json({ ok: true, saved, skipped, skipReasons });
 });
 
 // GET /api/unittests/remarks — list saved remarks for a class's test+report-type

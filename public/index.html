@@ -964,7 +964,14 @@ async function saveUnitTests() {
   try {
     const r = await fetch('/api/unittests/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries }) });
     const d = await r.json();
-    if (r.ok) showAlert('ut-alert', `✅ Saved ${d.saved} marks. Will sync to local system within 2 minutes.`, 'success');
+    if (r.ok) {
+      if (d.skipped) {
+        const reasons = (d.skipReasons || []).slice(0, 5).map(sr => `student ${sr.student_id} (${sr.subject}): ${sr.reason}`).join('; ');
+        showAlert('ut-alert', `⚠️ Saved ${d.saved} marks, but ${d.skipped} were NOT saved — ${reasons || 'see server log'}.`, 'error');
+      } else {
+        showAlert('ut-alert', `✅ Saved ${d.saved} marks. Will sync to local system within 2 minutes.`, 'success');
+      }
+    }
     else showAlert('ut-alert', d.error || 'Save failed.', 'error');
   } catch(e) { showAlert('ut-alert','Network error.','error'); }
   btn.disabled = false; btn.textContent = '💾 Save All';
@@ -1062,14 +1069,16 @@ async function loadUtReport() {
   if (!school || !cls) { area.innerHTML = '<p style="color:#718096;">Select a school and class.</p>'; return; }
   area.innerHTML = '<p style="color:#718096;">Loading…</p>';
 
-  let cdata = { subjects: [] }, marks = [];
+  let cdata = { subjects: [] }, marks = [], roster = [];
   try {
-    const [cr, mr] = await Promise.all([
+    const [cr, mr, students] = await Promise.all([
       fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`),
       fetch('/api/unittests?' + new URLSearchParams({ school, class_name: cls, test_name: testName, academic_year: year })),
+      fetchStudents(school, cls),
     ]);
     if (cr.ok) cdata = await cr.json();
     if (mr.ok) marks = await mr.json();
+    roster = students || [];
   } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
 
   const allSubjects = cdata.subjects || [];
@@ -1077,13 +1086,19 @@ async function loadUtReport() {
 
   if (!subjects.length) { area.innerHTML = `<p style="color:#718096;">This class has no subjects in the ${UTR_REPORT_LABELS[reportType]}.</p>`; return; }
 
+  // Seed the list from the full class roster (not just students who have a
+  // saved mark row) so a student missing marks in every subject still shows
+  // up in the report — with blank cells — instead of disappearing silently.
   const byStudent = {};
+  roster.forEach(s => {
+    byStudent[s.id] = { student_id: s.id, name: s.name, roll_no: s.roll_no, subjects: {} };
+  });
   marks.forEach(m => {
     if (!byStudent[m.student_id]) byStudent[m.student_id] = { student_id: m.student_id, name: m.student_name, roll_no: m.roll_no, subjects: {} };
     byStudent[m.student_id].subjects[m.subject] = m;
   });
   const list = Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||9999)-(parseInt(b.roll_no)||9999) || (a.name||'').localeCompare(b.name||''));
-  if (!list.length) { area.innerHTML = '<p style="color:#718096;">No marks saved yet for this school, class, year and test.</p>'; return; }
+  if (!list.length) { area.innerHTML = '<p style="color:#718096;">No students found for this school and class.</p>'; return; }
 
   utrCache = { list, subjects, year, testName, school, cls, reportType };
   renderUtrTable();
