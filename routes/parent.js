@@ -45,10 +45,28 @@ router.get('/children', async (req, res) => {
   res.json(children);
 });
 
-// Add another child to this already-approved parent account — no local
-// admin re-approval needed, but the child must still be a real student
-// (verified against cloud_students by school+class+roll_no), so a parent
-// still can't just claim any random child.
+// Pending "add another child" requests for this parent account, awaiting
+// school approval (see POST /children below).
+async function myPendingRequests(req) {
+  const { data: reqs } = await supabase
+    .from('cloud_parent_child_requests')
+    .select('id, student_id, status')
+    .eq('parent_user_id', req.session.user.id)
+    .eq('status', 'pending');
+  if (!reqs || !reqs.length) return [];
+
+  const { data: students } = await supabase.from('cloud_students').select('id,name,school,class_name,division,roll_no').in('id', reqs.map(r => r.student_id));
+  const studentMap = {};
+  (students || []).forEach(s => { studentMap[s.id] = s; });
+  return reqs.map(r => ({ request_id: r.id, ...studentMap[r.student_id] }));
+}
+
+// Request another child be added to this already-approved parent account.
+// Unlike the first child (checked at registration time), this does NOT
+// grant access immediately — it's staged as 'pending' and a school admin
+// must approve it from the online portal's Parent Requests tab before the
+// parent can see that child's data. The child must still be a real student
+// (verified against cloud_students by school+class+roll_no).
 router.post('/children', async (req, res) => {
   const { school, class_name, roll_no } = req.body;
   if (!school || !class_name || !roll_no)
@@ -67,12 +85,25 @@ router.post('/children', async (req, res) => {
   if (student.id === req.session.user.parent_student_id)
     return res.status(400).json({ error: `${student.name} is already linked to your account.` });
 
+  const children = await myChildren(req);
+  if (children.some(c => c.id === student.id))
+    return res.status(400).json({ error: `${student.name} is already linked to your account.` });
+
+  const { data: existingReq } = await supabase
+    .from('cloud_parent_child_requests')
+    .select('id, status')
+    .eq('parent_user_id', req.session.user.id).eq('student_id', student.id)
+    .limit(1);
+  if (existingReq && existingReq.length && existingReq[0].status === 'pending')
+    return res.status(400).json({ error: `A request for ${student.name} is already pending school approval.` });
+
   const { error } = await supabase
-    .from('cloud_parent_children')
-    .upsert({ parent_user_id: req.session.user.id, student_id: student.id }, { onConflict: 'parent_user_id,student_id' });
+    .from('cloud_parent_child_requests')
+    .upsert({ parent_user_id: req.session.user.id, student_id: student.id, status: 'pending', decided_at: null, decided_by: null },
+      { onConflict: 'parent_user_id,student_id' });
   if (error) return res.status(500).json({ error: error.message });
 
-  res.json({ ok: true, student });
+  res.json({ ok: true, student, message: `Request submitted for ${student.name}. Pending school approval.` });
 });
 
 function academicYear() {
@@ -116,7 +147,8 @@ const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 router.get('/me', async (req, res) => {
   const { children, student } = await resolveStudent(req);
   if (!student) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
-  res.json({ student, children });
+  const pending = await myPendingRequests(req);
+  res.json({ student, children, pending });
 });
 
 router.get('/result', async (req, res) => {

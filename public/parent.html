@@ -184,9 +184,12 @@ async function init() {
   }
 }
 
+let pendingRequests = [];
+
 async function loadChildren() {
   const data = await api('/api/parent/me');
   children = data.children || [data.student];
+  pendingRequests = data.pending || [];
   activeStudentId = data.student.id;
   renderChildStrip();
   renderActiveChild();
@@ -194,13 +197,19 @@ async function loadChildren() {
 
 function renderChildStrip() {
   const strip = document.getElementById('child-strip');
-  if (children.length <= 1) { strip.innerHTML = ''; return; }
-  strip.innerHTML = children.map(c => `
+  if (children.length <= 1 && !pendingRequests.length) { strip.innerHTML = ''; return; }
+  const approvedChips = children.map(c => `
     <button class="child-chip${c.id === activeStudentId ? ' active' : ''}" data-id="${c.id}"
       style="padding:6px 14px; border-radius:20px; border:1px solid ${c.id === activeStudentId ? '#2d6a9f' : '#cbd5e0'};
       background:${c.id === activeStudentId ? '#2d6a9f' : '#fff'}; color:${c.id === activeStudentId ? '#fff' : '#4a5568'};
       font-size:13px; font-weight:600; cursor:pointer;">${escapeHtml(c.name)}</button>
   `).join('');
+  const pendingChips = pendingRequests.map(p => `
+    <span title="Waiting for the school to approve this account for ${escapeHtml(p.name)}"
+      style="padding:6px 14px; border-radius:20px; border:1px dashed #cbd5e0; background:#f7fafc; color:#a0aec0;
+      font-size:13px; font-weight:600;">${escapeHtml(p.name)} — Pending school approval</span>
+  `).join('');
+  strip.innerHTML = approvedChips + pendingChips;
   strip.querySelectorAll('.child-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       activeStudentId = parseInt(btn.dataset.id, 10);
@@ -227,10 +236,11 @@ async function addChild() {
   errEl.style.display = 'none';
   if (!school || !class_name || !roll_no) { errEl.textContent = 'All fields are required.'; errEl.style.display = ''; return; }
   try {
-    await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ school, class_name, roll_no }) });
+    const result = await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ school, class_name, roll_no }) });
     document.getElementById('ac-roll').value = '';
     document.getElementById('add-child-form').style.display = 'none';
     await loadChildren();
+    alert(result.message || 'Request submitted. Pending school approval.');
   } catch (e) {
     errEl.textContent = e.message;
     errEl.style.display = '';

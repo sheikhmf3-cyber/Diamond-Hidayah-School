@@ -230,6 +230,7 @@
     <div class="tab" onclick="switchTab('unittest')">✏️ Unit Tests</div>
     <div class="tab" onclick="switchTab('utreport')">📊 Unit Test Report</div>
     <div class="tab" onclick="switchTab('top5')">🏆 Top 5</div>
+    <div class="tab" id="tab-btn-parentreq" style="display:none;" onclick="switchTab('parentreq')">👪 Parent Requests<span id="parentreq-badge" style="display:none; margin-left:6px; background:#e53e3e; color:#fff; border-radius:10px; padding:1px 7px; font-size:11px;"></span></div>
   </div>
 
   <div class="content">
@@ -533,6 +534,27 @@
       <div id="top5-area"></div>
     </div>
 
+    <!-- ═══════════════════════════════ PARENT REQUESTS TAB (admin only) ═══════════════════════════════ -->
+    <div id="tab-parentreq" style="display:none;">
+      <div class="card">
+        <h2>👪 Parent Requests — Additional Children Pending Approval</h2>
+        <p style="font-size:13px;color:#718096;margin-bottom:16px;">A parent already has one approved child on their account and has asked to add another. Verify it's genuinely their child before approving — approving grants that account access to this child's report card, unit test marks and daily diary.</p>
+        <table class="data-table" style="width:100%; border-collapse:collapse; font-size:14px;">
+          <thead>
+            <tr style="text-align:left; border-bottom:2px solid #e2e8f0;">
+              <th style="padding:8px 10px;">Parent</th>
+              <th style="padding:8px 10px;">Existing Child</th>
+              <th style="padding:8px 10px;">Requested Child</th>
+              <th style="padding:8px 10px;">School / Class / Roll</th>
+              <th style="padding:8px 10px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="parentreq-tbody"></tbody>
+        </table>
+        <p class="muted" id="parentreq-empty" style="display:none; color:#718096; font-size:13px; padding:14px 0;">No pending requests.</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -676,6 +698,10 @@ async function showApp() {
   document.getElementById('user-name-display').textContent = currentUser.name + ' (' + currentUser.role + ')';
   await loadAllClasses();
   populateSchoolDropdowns();
+  if (currentUser.role === 'admin') {
+    document.getElementById('tab-btn-parentreq').style.display = '';
+    refreshParentRequestBadge();
+  }
 }
 
 async function loadAllClasses() {
@@ -694,9 +720,58 @@ function populateSchoolDropdowns() {
 
 // ── Tabs ──────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['reportcard','diary','unittest','utreport','top5'];
+  const tabs = ['reportcard','diary','unittest','utreport','top5','parentreq'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   tabs.forEach(t => { document.getElementById('tab-'+t).style.display = t===name ? '' : 'none'; });
+  if (name === 'parentreq') loadParentRequests();
+}
+
+// ── Parent Requests (admin only) ───────────────────────────────
+async function refreshParentRequestBadge() {
+  if (currentUser.role !== 'admin') return;
+  try {
+    const r = await fetch('/api/admin/parent-requests');
+    const list = r.ok ? await r.json() : [];
+    const badge = document.getElementById('parentreq-badge');
+    if (list.length) { badge.textContent = list.length; badge.style.display = ''; }
+    else badge.style.display = 'none';
+  } catch (e) {}
+}
+
+async function loadParentRequests() {
+  const tbody = document.getElementById('parentreq-tbody');
+  const empty = document.getElementById('parentreq-empty');
+  tbody.innerHTML = '';
+  try {
+    const r = await fetch('/api/admin/parent-requests');
+    const list = r.ok ? await r.json() : [];
+    if (!list.length) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = list.map(req => `
+      <tr style="border-bottom:1px solid #edf2f7;">
+        <td style="padding:8px 10px;">${req.parent_name || ''} <span style="color:#a0aec0;">(${req.parent_username || ''})</span></td>
+        <td style="padding:8px 10px;">${req.existing_child_name || '—'}</td>
+        <td style="padding:8px 10px;"><strong>${req.requested_child?.name || ''}</strong></td>
+        <td style="padding:8px 10px;">${req.requested_child?.school || ''} · ${req.requested_child?.class_name || ''}${req.requested_child?.division ? ' '+req.requested_child.division : ''} · Roll ${req.requested_child?.roll_no || ''}</td>
+        <td style="padding:8px 10px;">
+          <button class="btn-save" style="padding:5px 12px; font-size:12px;" onclick="decideParentRequest(${req.request_id}, 'approve')">Approve</button>
+          <button style="padding:5px 12px; font-size:12px; background:#fff; color:#c53030; border:1px solid #c53030; border-radius:8px; font-weight:600; cursor:pointer;" onclick="decideParentRequest(${req.request_id}, 'reject')">Reject</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    empty.textContent = 'Could not load requests.';
+    empty.style.display = '';
+  }
+}
+
+async function decideParentRequest(requestId, action) {
+  try {
+    const r = await fetch(`/api/admin/parent-requests/${requestId}/${action}`, { method: 'POST' });
+    if (!r.ok) { const d = await r.json().catch(()=>({})); alert(d.error || 'Action failed.'); return; }
+    await loadParentRequests();
+    await refreshParentRequestBadge();
+  } catch (e) { alert('Network error. Try again.'); }
 }
 
 // ── Class/Student loaders (shared helper) ─────────────────────
