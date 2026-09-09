@@ -42,9 +42,27 @@
 <div class="content">
   <div id="loading" class="muted">Loading...</div>
   <div id="content" style="display:none;">
-    <div class="child-strip" id="child-strip"></div>
+    <div class="card" id="select-card">
+      <h2>Select School, Class &amp; Roll No.</h2>
+      <div class="child-strip" id="child-strip"></div>
+      <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px;">
+        <div style="flex:1; min-width:180px;">
+          <label style="display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">School</label>
+          <select id="sel-school" disabled style="width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px;"></select>
+        </div>
+        <div style="flex:1; min-width:120px;">
+          <label style="display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">Class</label>
+          <select id="sel-class" disabled style="width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px;"></select>
+        </div>
+        <div style="flex:1; min-width:100px;">
+          <label style="display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">Roll No.</label>
+          <input id="sel-roll" disabled style="width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px;">
+        </div>
+      </div>
+      <button class="btn-primary" id="view-result-btn" style="width:auto; padding:11px 28px;">View Result</button>
+    </div>
 
-    <div class="exam-tabs">
+    <div class="exam-tabs" id="exam-tabs" style="display:none;">
       <button data-exam="unit_test_1">Unit Test 1</button>
       <button data-exam="unit_test_2">Unit Test 2</button>
       <button data-exam="term_1">Term 1</button>
@@ -89,18 +107,20 @@ async function init() {
     const me = await api('/api/auth/me');
     if (!me.user || me.user.role !== 'parent') { window.location.href = '/'; return; }
     const { student } = await api('/api/parent/me');
-    document.getElementById('child-strip').innerHTML = `
-      <span><strong>${escapeHtml(student.name)}</strong></span>
-      <span>${escapeHtml(student.school)}</span>
-      <span>Class ${escapeHtml(student.class_name)}${student.division?' - '+escapeHtml(student.division):''}</span>
-      <span>Roll No. ${escapeHtml(student.roll_no||'-')}</span>
-    `;
+    document.getElementById('child-strip').innerHTML = `<span><strong>${escapeHtml(student.name)}</strong></span>`;
+    document.getElementById('sel-school').innerHTML = `<option>${escapeHtml(student.school)}</option>`;
+    document.getElementById('sel-class').innerHTML = `<option>${escapeHtml(student.class_name)}${student.division?' - '+escapeHtml(student.division):''}</option>`;
+    document.getElementById('sel-roll').value = student.roll_no || '-';
+
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = '';
     document.querySelectorAll('.exam-tabs button').forEach(btn => {
       btn.addEventListener('click', () => selectExam(btn.dataset.exam, btn));
     });
-    selectExam('unit_test_1', document.querySelector('.exam-tabs button[data-exam="unit_test_1"]'));
+    document.getElementById('view-result-btn').addEventListener('click', () => {
+      document.getElementById('exam-tabs').style.display = '';
+      selectExam('unit_test_1', document.querySelector('.exam-tabs button[data-exam="unit_test_1"]'));
+    });
   } catch (e) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error-box').style.display = '';

@@ -173,6 +173,7 @@
     <button class="btn-primary" onclick="doLogin()">Login</button>
     <div id="login-error" class="error-msg"></div>
     <p class="switch-link">New teacher? <a href="#" onclick="showRegisterBox();return false;">Register for an account</a></p>
+    <p class="switch-link">Parent? <a href="#" onclick="showParentRegisterBox();return false;">Register to check your child's result</a></p>
   </div>
   <div class="login-box" id="register-box" style="display:none;">
     <h1>🏫 Diamond / Hidayah School</h1>
@@ -189,6 +190,27 @@
     <div id="register-error" class="error-msg"></div>
     <div id="register-success" class="success-msg" style="display:none;"></div>
     <p class="switch-link">Already approved? <a href="#" onclick="showLoginBox();return false;">Log in</a></p>
+  </div>
+  <div class="login-box" id="parent-register-box" style="display:none;">
+    <h1>🏫 Diamond / Hidayah School</h1>
+    <p>Parent Registration</p>
+    <label>Your Full Name</label>
+    <input type="text" id="preg-name" placeholder="Full name">
+    <label>Choose a Username</label>
+    <input type="text" id="preg-username" placeholder="Username" autocomplete="username">
+    <label>Choose a Password</label>
+    <input type="password" id="preg-password" placeholder="Password" autocomplete="new-password">
+    <label>School</label>
+    <select id="preg-school"></select>
+    <label>Class</label>
+    <select id="preg-class"></select>
+    <label>Your Child's Roll No.</label>
+    <input type="text" id="preg-roll" placeholder="e.g. 12">
+    <button class="btn-primary" onclick="doParentRegister()">Submit Registration</button>
+    <div id="parent-register-error" class="error-msg"></div>
+    <div id="parent-register-success" class="success-msg" style="display:none;"></div>
+    <p class="switch-link">Already approved? <a href="#" onclick="showLoginBox();return false;">Log in</a></p>
+    <p class="switch-link">Teacher? <a href="#" onclick="showRegisterBox();return false;">Register here instead</a></p>
   </div>
 </div>
 
@@ -536,14 +558,74 @@ async function doLogin() {
 
 function showRegisterBox() {
   document.getElementById('login-box').style.display = 'none';
+  document.getElementById('parent-register-box').style.display = 'none';
   document.getElementById('register-box').style.display = 'block';
   document.getElementById('login-error').textContent = '';
 }
 function showLoginBox() {
   document.getElementById('register-box').style.display = 'none';
+  document.getElementById('parent-register-box').style.display = 'none';
   document.getElementById('login-box').style.display = 'block';
   document.getElementById('register-error').textContent = '';
   document.getElementById('register-success').style.display = 'none';
+  document.getElementById('parent-register-error').textContent = '';
+  document.getElementById('parent-register-success').style.display = 'none';
+}
+
+const PARENT_REG_SCHOOL_CLASSES = {
+  'Diamond English Medium School & Junior College, Solapur': ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'],
+  'Hidayah English Medium School, Solapur': ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'],
+  'Hidayah Pre-Primary School, Solapur': ['LKG','UKG'],
+};
+function populateParentRegClasses() {
+  const schoolSel = document.getElementById('preg-school');
+  const classSel = document.getElementById('preg-class');
+  classSel.innerHTML = '';
+  (PARENT_REG_SCHOOL_CLASSES[schoolSel.value] || []).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    classSel.appendChild(opt);
+  });
+}
+function showParentRegisterBox() {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('register-box').style.display = 'none';
+  document.getElementById('parent-register-box').style.display = 'block';
+  document.getElementById('login-error').textContent = '';
+  const schoolSel = document.getElementById('preg-school');
+  if (!schoolSel.options.length) {
+    Object.keys(PARENT_REG_SCHOOL_CLASSES).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      schoolSel.appendChild(opt);
+    });
+    schoolSel.addEventListener('change', populateParentRegClasses);
+    populateParentRegClasses();
+  }
+}
+async function doParentRegister() {
+  const name = document.getElementById('preg-name').value.trim();
+  const username = document.getElementById('preg-username').value.trim();
+  const password = document.getElementById('preg-password').value;
+  const school = document.getElementById('preg-school').value;
+  const class_name = document.getElementById('preg-class').value;
+  const roll_no = document.getElementById('preg-roll').value.trim();
+  const errEl = document.getElementById('parent-register-error');
+  const okEl = document.getElementById('parent-register-success');
+  errEl.textContent = ''; okEl.style.display = 'none';
+  if (!name || !username || !password || !school || !class_name || !roll_no) { errEl.textContent = 'All fields are required.'; return; }
+  if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
+  try {
+    const r = await fetch('/api/auth/register-parent', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, username, password, school, class_name, roll_no }) });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Registration failed.'; return; }
+    okEl.textContent = d.message || 'Registered. Pending admin approval.';
+    okEl.style.display = 'block';
+    document.getElementById('preg-name').value = '';
+    document.getElementById('preg-username').value = '';
+    document.getElementById('preg-password').value = '';
+    document.getElementById('preg-roll').value = '';
+  } catch(e) { errEl.textContent = 'Network error. Try again.'; }
 }
 async function doRegister() {
   const name = document.getElementById('reg-name').value.trim();
@@ -1373,6 +1455,7 @@ function showAlert(id, msg, type) {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || document.getElementById('login-page').style.display === 'none') return;
   if (document.getElementById('register-box').style.display !== 'none') doRegister();
+  else if (document.getElementById('parent-register-box').style.display !== 'none') doParentRegister();
   else doLogin();
 });
 
