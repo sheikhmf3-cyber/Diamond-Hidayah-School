@@ -34,6 +34,30 @@
   .error-box { background:#fff5f5; color:#c53030; padding:10px 14px; border-radius:6px; font-size:.85rem; margin-bottom:14px; }
   .btn-primary { background:#2d6a9f; color:#fff; border:none; border-radius:7px; font-size:14px; font-weight:600; cursor:pointer; }
   .btn-primary:hover { background:#1e3a5f; }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    .topbar { padding:0 14px; height:auto; min-height:52px; flex-wrap:wrap; }
+    .topbar h1 { font-size:14px; padding:10px 0; }
+    .content { padding:12px; }
+    .card { padding:16px; border-radius:10px; }
+    .card h2 { font-size:14px; }
+    .exam-tabs { gap:6px; }
+    .exam-tabs button { padding:8px 12px; font-size:12px; flex:1 1 auto; }
+    .summary-row { gap:8px; }
+    .summary-tile { flex:1 1 100%; min-width:0; }
+    #select-card .btn-row { display:flex; flex-wrap:wrap; gap:10px; }
+    #select-card .btn-row button { width:auto; flex:1 1 auto; margin-left:0 !important; }
+
+    /* Turn the results table into stacked cards — a 3-column table
+       is too cramped on a phone screen, and horizontal scroll makes
+       it easy to miss a column. */
+    #result-card table thead { display:none; }
+    #result-card table, #result-card tbody, #result-card tr, #result-card td { display:block; width:100%; }
+    #result-card tbody tr { border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; margin-bottom:8px; }
+    #result-card tbody td { border-bottom:none; padding:4px 0; display:flex; justify-content:space-between; gap:10px; }
+    #result-card tbody td::before { content: attr(data-label); font-weight:600; color:#718096; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  }
 </style>
 </head>
 <body>
@@ -61,8 +85,10 @@
           <input id="sel-roll" disabled style="width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px;">
         </div>
       </div>
-      <button class="btn-primary" id="view-result-btn" style="width:auto; padding:11px 28px;">View Result</button>
-      <button id="toggle-add-child-btn" style="width:auto; margin-left:10px; padding:11px 18px; background:transparent; border:1px solid #cbd5e0; border-radius:7px; font-size:13px; font-weight:600; color:#4a5568; cursor:pointer;">+ Add another child</button>
+      <div class="btn-row">
+        <button class="btn-primary" id="view-result-btn" style="width:auto; padding:11px 28px;">View Result</button>
+        <button id="toggle-add-child-btn" style="width:auto; margin-left:10px; padding:11px 18px; background:transparent; border:1px solid #cbd5e0; border-radius:7px; font-size:13px; font-weight:600; color:#4a5568; cursor:pointer;">+ Add another child</button>
+      </div>
 
       <div id="add-child-form" style="display:none; margin-top:18px; padding-top:18px; border-top:1px solid #e2e8f0;">
         <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px;">
@@ -273,7 +299,7 @@ async function loadResult(exam) {
     const data = await api(`/api/parent/result?exam=${exam}&student_id=${activeStudentId}`);
     if (!data.subjects.length) { empty.style.display = ''; return; }
     tbody.innerHTML = data.subjects.map(r => `<tr>
-      <td>${escapeHtml(r.subject)}</td><td>${r.total}</td><td>${r.obtained}</td>
+      <td data-label="Subject">${escapeHtml(r.subject)}</td><td data-label="Total Marks">${r.total}</td><td data-label="Obtained Marks">${r.obtained}</td>
     </tr>`).join('');
     summary.innerHTML = `
       <div class="summary-tile"><div class="l">Grand Total</div><div class="v">${data.obtained_total} / ${data.grand_total}</div></div>
