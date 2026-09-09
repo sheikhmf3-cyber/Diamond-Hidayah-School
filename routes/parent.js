@@ -1,13 +1,79 @@
 // routes/parent.js — Cloud version. Same privacy rule as the local system:
-// the student is always taken from req.session.user.parent_student_id,
-// never from a query/body param, so a parent can never request another
-// family's records.
+// a student is only ever served if it's the parent's own registered child
+// (session.user.parent_student_id) or one they've explicitly linked via
+// cloud_parent_children — never an arbitrary id taken on trust from a
+// query/body param, so a parent can never request another family's records.
 const express = require('express');
 const supabase = require('../db/supabase');
 const { requireLogin, requireParent } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(requireLogin, requireParent);
+
+// All students this parent account is allowed to view: the one they
+// originally registered with, plus any added later via POST /children.
+async function myChildren(req) {
+  const primaryId = req.session.user.parent_student_id;
+  const { data: links } = await supabase
+    .from('cloud_parent_children')
+    .select('student_id')
+    .eq('parent_user_id', req.session.user.id);
+
+  const ids = [...new Set([primaryId, ...(links || []).map(l => l.student_id)].filter(Boolean))];
+  if (!ids.length) return [];
+
+  const { data: students } = await supabase.from('cloud_students').select('*').in('id', ids);
+  return students || [];
+}
+
+// Resolve which child's data to serve for this request: the one named by
+// ?student_id=, but only if it's actually one of this parent's own children;
+// otherwise falls back to their primary/first child.
+async function resolveStudent(req) {
+  const children = await myChildren(req);
+  if (!children.length) return { children, student: null };
+  const requested = req.query.student_id;
+  const student = requested
+    ? children.find(c => String(c.id) === String(requested))
+    : children[0];
+  return { children, student: student || null };
+}
+
+// List all children linked to this parent account
+router.get('/children', async (req, res) => {
+  const children = await myChildren(req);
+  res.json(children);
+});
+
+// Add another child to this already-approved parent account — no local
+// admin re-approval needed, but the child must still be a real student
+// (verified against cloud_students by school+class+roll_no), so a parent
+// still can't just claim any random child.
+router.post('/children', async (req, res) => {
+  const { school, class_name, roll_no } = req.body;
+  if (!school || !class_name || !roll_no)
+    return res.status(400).json({ error: 'School, class and roll number are required.' });
+
+  const { data: students, error: studentErr } = await supabase
+    .from('cloud_students')
+    .select('id, name')
+    .eq('school', school).eq('class_name', class_name).eq('roll_no', String(roll_no).trim())
+    .limit(1);
+  if (studentErr) return res.status(500).json({ error: studentErr.message });
+  if (!students || !students.length)
+    return res.status(400).json({ error: 'No student found with that roll number in that class. Please check the details, or contact the school office.' });
+  const student = students[0];
+
+  if (student.id === req.session.user.parent_student_id)
+    return res.status(400).json({ error: `${student.name} is already linked to your account.` });
+
+  const { error } = await supabase
+    .from('cloud_parent_children')
+    .upsert({ parent_user_id: req.session.user.id, student_id: student.id }, { onConflict: 'parent_user_id,student_id' });
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ ok: true, student });
+});
 
 function academicYear() {
   const now = new Date();
@@ -47,21 +113,14 @@ function utGrade(pct) {
 
 const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 
-async function myStudent(req) {
-  const id = req.session.user.parent_student_id;
-  if (!id) return null;
-  const { data } = await supabase.from('cloud_students').select('*').eq('id', id).single();
-  return data || null;
-}
-
 router.get('/me', async (req, res) => {
-  const s = await myStudent(req);
-  if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
-  res.json({ student: s, extra: null });
+  const { children, student } = await resolveStudent(req);
+  if (!student) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
+  res.json({ student, children });
 });
 
 router.get('/result', async (req, res) => {
-  const s = await myStudent(req);
+  const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
   const exam = req.query.exam;
   const academic_year = req.query.academic_year || academicYear();
@@ -123,7 +182,7 @@ router.get('/result', async (req, res) => {
 });
 
 router.get('/diary', async (req, res) => {
-  const s = await myStudent(req);
+  const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
   const { from, to } = req.query;
   let q = supabase.from('cloud_daily_diary').select('*').eq('student_id', s.id);

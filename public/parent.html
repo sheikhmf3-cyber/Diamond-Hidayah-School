@@ -32,6 +32,8 @@
   .diary-entry .d-field { font-size:.85rem; margin:2px 0; }
   .diary-entry .d-field b { color:#4a5568; }
   .error-box { background:#fff5f5; color:#c53030; padding:10px 14px; border-radius:6px; font-size:.85rem; margin-bottom:14px; }
+  .btn-primary { background:#2d6a9f; color:#fff; border:none; border-radius:7px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-primary:hover { background:#1e3a5f; }
 </style>
 </head>
 <body>
@@ -60,6 +62,26 @@
         </div>
       </div>
       <button class="btn-primary" id="view-result-btn" style="width:auto; padding:11px 28px;">View Result</button>
+      <button id="toggle-add-child-btn" style="width:auto; margin-left:10px; padding:11px 18px; background:transparent; border:1px solid #cbd5e0; border-radius:7px; font-size:13px; font-weight:600; color:#4a5568; cursor:pointer;">+ Add another child</button>
+
+      <div id="add-child-form" style="display:none; margin-top:18px; padding-top:18px; border-top:1px solid #e2e8f0;">
+        <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px;">
+          <div style="flex:1; min-width:180px;">
+            <label style="display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">School</label>
+            <select id="ac-school" style="width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px;"></select>
+          </div>
+          <div style="flex:1; min-width:120px;">
+            <label style="display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">Class</label>
+            <select id="ac-class" style="width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px;"></select>
+          </div>
+          <div style="flex:1; min-width:100px;">
+            <label style="display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">Roll No.</label>
+            <input id="ac-roll" placeholder="e.g. 12" style="width:100%; padding:9px 12px; border:1px solid #cbd5e0; border-radius:7px; font-size:14px;">
+          </div>
+        </div>
+        <button class="btn-primary" id="add-child-submit-btn" style="width:auto; padding:10px 24px;">Add Child</button>
+        <div id="add-child-error" class="error-box" style="display:none; margin-top:12px;"></div>
+      </div>
     </div>
 
     <div class="exam-tabs" id="exam-tabs" style="display:none;">
@@ -94,6 +116,18 @@
 <script>
 const EXAM_LABELS = { unit_test_1:'Unit Test 1', unit_test_2:'Unit Test 2', term_1:'Term 1', term_2:'Term 2' };
 
+// Same school → class list used on the registration form (public/index.html),
+// kept in sync manually since this is a separate static page.
+const SCHOOL_CLASSES = {
+  'Diamond English Medium School & Junior College, Solapur': ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'],
+  'Hidayah English Medium School, Solapur': ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'],
+  'Hidayah Pre-Primary School, Solapur': ['LKG','UKG'],
+};
+
+let children = [];
+let activeStudentId = null;
+let currentExam = 'unit_test_1';
+
 async function api(url, opts) {
   const res = await fetch(url, { headers: {'Content-Type':'application/json'}, ...opts });
   const data = await res.json().catch(()=>({}));
@@ -102,15 +136,32 @@ async function api(url, opts) {
 }
 function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+function populateAddChildClasses() {
+  const schoolSel = document.getElementById('ac-school');
+  const classSel = document.getElementById('ac-class');
+  classSel.innerHTML = '';
+  (SCHOOL_CLASSES[schoolSel.value] || []).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    classSel.appendChild(opt);
+  });
+}
+
 async function init() {
   try {
     const me = await api('/api/auth/me');
     if (!me.user || me.user.role !== 'parent') { window.location.href = '/'; return; }
-    const { student } = await api('/api/parent/me');
-    document.getElementById('child-strip').innerHTML = `<span><strong>${escapeHtml(student.name)}</strong></span>`;
-    document.getElementById('sel-school').innerHTML = `<option>${escapeHtml(student.school)}</option>`;
-    document.getElementById('sel-class').innerHTML = `<option>${escapeHtml(student.class_name)}${student.division?' - '+escapeHtml(student.division):''}</option>`;
-    document.getElementById('sel-roll').value = student.roll_no || '-';
+
+    const schoolSel = document.getElementById('ac-school');
+    Object.keys(SCHOOL_CLASSES).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      schoolSel.appendChild(opt);
+    });
+    schoolSel.addEventListener('change', populateAddChildClasses);
+    populateAddChildClasses();
+
+    await loadChildren();
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = '';
@@ -121,6 +172,11 @@ async function init() {
       document.getElementById('exam-tabs').style.display = '';
       selectExam('unit_test_1', document.querySelector('.exam-tabs button[data-exam="unit_test_1"]'));
     });
+    document.getElementById('toggle-add-child-btn').addEventListener('click', () => {
+      const form = document.getElementById('add-child-form');
+      form.style.display = form.style.display === 'none' ? '' : 'none';
+    });
+    document.getElementById('add-child-submit-btn').addEventListener('click', addChild);
   } catch (e) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error-box').style.display = '';
@@ -128,8 +184,63 @@ async function init() {
   }
 }
 
+async function loadChildren() {
+  const data = await api('/api/parent/me');
+  children = data.children || [data.student];
+  activeStudentId = data.student.id;
+  renderChildStrip();
+  renderActiveChild();
+}
+
+function renderChildStrip() {
+  const strip = document.getElementById('child-strip');
+  if (children.length <= 1) { strip.innerHTML = ''; return; }
+  strip.innerHTML = children.map(c => `
+    <button class="child-chip${c.id === activeStudentId ? ' active' : ''}" data-id="${c.id}"
+      style="padding:6px 14px; border-radius:20px; border:1px solid ${c.id === activeStudentId ? '#2d6a9f' : '#cbd5e0'};
+      background:${c.id === activeStudentId ? '#2d6a9f' : '#fff'}; color:${c.id === activeStudentId ? '#fff' : '#4a5568'};
+      font-size:13px; font-weight:600; cursor:pointer;">${escapeHtml(c.name)}</button>
+  `).join('');
+  strip.querySelectorAll('.child-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeStudentId = parseInt(btn.dataset.id, 10);
+      renderChildStrip();
+      renderActiveChild();
+      if (document.getElementById('exam-tabs').style.display !== 'none') selectExam(currentExam);
+    });
+  });
+}
+
+function renderActiveChild() {
+  const student = children.find(c => c.id === activeStudentId);
+  if (!student) return;
+  document.getElementById('sel-school').innerHTML = `<option>${escapeHtml(student.school)}</option>`;
+  document.getElementById('sel-class').innerHTML = `<option>${escapeHtml(student.class_name)}${student.division?' - '+escapeHtml(student.division):''}</option>`;
+  document.getElementById('sel-roll').value = student.roll_no || '-';
+}
+
+async function addChild() {
+  const school = document.getElementById('ac-school').value;
+  const class_name = document.getElementById('ac-class').value;
+  const roll_no = document.getElementById('ac-roll').value.trim();
+  const errEl = document.getElementById('add-child-error');
+  errEl.style.display = 'none';
+  if (!school || !class_name || !roll_no) { errEl.textContent = 'All fields are required.'; errEl.style.display = ''; return; }
+  try {
+    await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ school, class_name, roll_no }) });
+    document.getElementById('ac-roll').value = '';
+    document.getElementById('add-child-form').style.display = 'none';
+    await loadChildren();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = '';
+  }
+}
+
 function selectExam(exam, btnEl) {
+  currentExam = exam;
   document.querySelectorAll('.exam-tabs button').forEach(b => b.classList.remove('active'));
+  if (!btnEl) btnEl = document.querySelector(`.exam-tabs button[data-exam="${exam}"]`);
   if (btnEl) btnEl.classList.add('active');
   if (exam === 'diary') {
     document.getElementById('result-card').style.display = 'none';
@@ -149,7 +260,7 @@ async function loadResult(exam) {
   document.getElementById('result-title').textContent = EXAM_LABELS[exam] + ' Result';
   tbody.innerHTML = ''; summary.innerHTML = ''; empty.style.display = 'none';
   try {
-    const data = await api('/api/parent/result?exam=' + exam);
+    const data = await api(`/api/parent/result?exam=${exam}&student_id=${activeStudentId}`);
     if (!data.subjects.length) { empty.style.display = ''; return; }
     tbody.innerHTML = data.subjects.map(r => `<tr>
       <td>${escapeHtml(r.subject)}</td><td>${r.total}</td><td>${r.obtained}</td>
@@ -171,7 +282,7 @@ async function loadDiary() {
   const empty = document.getElementById('diary-empty');
   list.innerHTML = ''; empty.style.display = 'none';
   try {
-    const rows = await api('/api/parent/diary');
+    const rows = await api('/api/parent/diary?student_id=' + activeStudentId);
     if (!rows.length) { empty.style.display = ''; return; }
     list.innerHTML = rows.map(r => `<div class="diary-entry">
       <div class="d-date">${escapeHtml(r.entry_date)}</div>
