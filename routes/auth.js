@@ -60,7 +60,8 @@ router.post('/login', async (req, res) => {
     username: user.username,
     role: user.role,
     allowed_sections: user.allowed_sections || '',
-    classes: classes || []
+    classes: classes || [],
+    parent_student_id: user.parent_student_id || null
   };
 
   res.json({ ok: true, user: req.session.user });

@@ -529,6 +529,7 @@ async function doLogin() {
     const d = await r.json();
     if (!r.ok) { document.getElementById('login-error').textContent = d.error || 'Login failed.'; return; }
     currentUser = d.user;
+    if (currentUser.role === 'parent') { window.location.href = '/parent.html'; return; }
     showApp();
   } catch(e) { document.getElementById('login-error').textContent = 'Network error. Try again.'; }
 }
@@ -577,7 +578,12 @@ async function doLogout() {
 async function checkSession() {
   try {
     const r = await fetch('/api/auth/me');
-    if (r.ok) { const d = await r.json(); currentUser = d.user; showApp(); }
+    if (r.ok) {
+      const d = await r.json();
+      currentUser = d.user;
+      if (currentUser.role === 'parent') { window.location.href = '/parent.html'; return; }
+      showApp();
+    }
     else { document.getElementById('login-page').style.display = 'flex'; }
   } catch(e) { document.getElementById('login-page').style.display = 'flex'; }
 }

@@ -8,4 +8,11 @@ function requireLogin(req, res, next) {
   next();
 }
 
-module.exports = { requireLogin };
+function requireParent(req, res, next) {
+  if (!req.session.user || req.session.user.role !== 'parent') {
+    return res.status(403).json({ error: 'Parent access only' });
+  }
+  next();
+}
+
+module.exports = { requireLogin, requireParent };

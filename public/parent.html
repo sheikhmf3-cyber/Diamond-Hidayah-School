@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parent Portal — Diamond School</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
+  .topbar { background:#1e3a5f; color:#fff; padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:56px; }
+  .topbar h1 { font-size:17px; font-weight:600; }
+  .btn-logout { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
+  .btn-logout:hover { background:rgba(255,255,255,0.25); }
+  .content { padding:24px; max-width:900px; margin:0 auto; }
+  .card { background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:20px; }
+  .card h2 { font-size:16px; font-weight:600; color:#1e3a5f; margin-bottom:18px; border-bottom:1px solid #e2e8f0; padding-bottom:12px; }
+  .child-strip { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:14px; color:#4a5568; margin-bottom:18px; }
+  .child-strip strong { color:#1a202c; }
+  .exam-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .exam-tabs button { background:#edf2f7; border:none; padding:9px 16px; border-radius:7px; font-size:13px; font-weight:600; color:#4a5568; cursor:pointer; }
+  .exam-tabs button.active { background:#1e3a5f; color:#fff; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  thead th { text-align:left; padding:8px 10px; font-size:12px; color:#718096; font-weight:600; border-bottom:2px solid #e2e8f0; }
+  tbody td { padding:8px 10px; border-bottom:1px solid #f0f4f8; }
+  .muted { color:#718096; font-size:13px; }
+  .summary-row { display:flex; flex-wrap:wrap; gap:14px; margin-top:16px; }
+  .summary-tile { background:#f7fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 16px; min-width:120px; }
+  .summary-tile .l { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#718096; }
+  .summary-tile .v { font-size:1.2rem; font-weight:700; color:#1e3a5f; }
+  .diary-entry { border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; margin-bottom:10px; }
+  .diary-entry .d-date { font-weight:700; color:#1e3a5f; margin-bottom:4px; }
+  .diary-entry .d-field { font-size:.85rem; margin:2px 0; }
+  .diary-entry .d-field b { color:#4a5568; }
+  .error-box { background:#fff5f5; color:#c53030; padding:10px 14px; border-radius:6px; font-size:.85rem; margin-bottom:14px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>🏫 Diamond / Hidayah School — Parent Portal</h1>
+  <button class="btn-logout" id="logout-btn">Log Out</button>
+</div>
+<div class="content">
+  <div id="loading" class="muted">Loading...</div>
+  <div id="content" style="display:none;">
+    <div class="child-strip" id="child-strip"></div>
+
+    <div class="exam-tabs">
+      <button data-exam="unit_test_1">Unit Test 1</button>
+      <button data-exam="unit_test_2">Unit Test 2</button>
+      <button data-exam="term_1">Term 1</button>
+      <button data-exam="term_2">Term 2</button>
+      <button data-exam="diary">Daily Diary</button>
+    </div>
+
+    <div class="card" id="result-card" style="display:none;">
+      <h2 id="result-title">Result</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Subject</th><th>Total Marks</th><th>Obtained Marks</th></tr></thead>
+          <tbody id="result-tbody"></tbody>
+        </table>
+      </div>
+      <p class="muted" id="result-empty" style="display:none;">No marks recorded yet for this exam.</p>
+      <div class="summary-row" id="result-summary"></div>
+    </div>
+
+    <div class="card" id="diary-card" style="display:none;">
+      <h2>Daily Diary</h2>
+      <div id="diary-list"></div>
+      <p class="muted" id="diary-empty" style="display:none;">No diary entries recorded yet.</p>
+    </div>
+  </div>
+  <div id="error-box" style="display:none;"></div>
+</div>
+
+<script>
+const EXAM_LABELS = { unit_test_1:'Unit Test 1', unit_test_2:'Unit Test 2', term_1:'Term 1', term_2:'Term 2' };
+
+async function api(url, opts) {
+  const res = await fetch(url, { headers: {'Content-Type':'application/json'}, ...opts });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function init() {
+  try {
+    const me = await api('/api/auth/me');
+    if (!me.user || me.user.role !== 'parent') { window.location.href = '/'; return; }
+    const { student } = await api('/api/parent/me');
+    document.getElementById('child-strip').innerHTML = `
+      <span><strong>${escapeHtml(student.name)}</strong></span>
+      <span>${escapeHtml(student.school)}</span>
+      <span>Class ${escapeHtml(student.class_name)}${student.division?' - '+escapeHtml(student.division):''}</span>
+      <span>Roll No. ${escapeHtml(student.roll_no||'-')}</span>
+    `;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = '';
+    document.querySelectorAll('.exam-tabs button').forEach(btn => {
+      btn.addEventListener('click', () => selectExam(btn.dataset.exam, btn));
+    });
+    selectExam('unit_test_1', document.querySelector('.exam-tabs button[data-exam="unit_test_1"]'));
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-box').style.display = '';
+    document.getElementById('error-box').innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function selectExam(exam, btnEl) {
+  document.querySelectorAll('.exam-tabs button').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  if (exam === 'diary') {
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('diary-card').style.display = '';
+    loadDiary();
+  } else {
+    document.getElementById('diary-card').style.display = 'none';
+    document.getElementById('result-card').style.display = '';
+    loadResult(exam);
+  }
+}
+
+async function loadResult(exam) {
+  const tbody = document.getElementById('result-tbody');
+  const summary = document.getElementById('result-summary');
+  const empty = document.getElementById('result-empty');
+  document.getElementById('result-title').textContent = EXAM_LABELS[exam] + ' Result';
+  tbody.innerHTML = ''; summary.innerHTML = ''; empty.style.display = 'none';
+  try {
+    const data = await api('/api/parent/result?exam=' + exam);
+    if (!data.subjects.length) { empty.style.display = ''; return; }
+    tbody.innerHTML = data.subjects.map(r => `<tr>
+      <td>${escapeHtml(r.subject)}</td><td>${r.total}</td><td>${r.obtained}</td>
+    </tr>`).join('');
+    summary.innerHTML = `
+      <div class="summary-tile"><div class="l">Grand Total</div><div class="v">${data.obtained_total} / ${data.grand_total}</div></div>
+      <div class="summary-tile"><div class="l">Percentage</div><div class="v">${data.percentage}%</div></div>
+      <div class="summary-tile"><div class="l">Grade</div><div class="v">${escapeHtml(data.grade||'-')}</div></div>
+      <div class="summary-tile" style="flex:1;"><div class="l">Remarks</div><div class="v" style="font-size:.95rem;">${escapeHtml(data.remarks||'-')}</div></div>
+    `;
+  } catch (e) {
+    empty.style.display = '';
+    empty.textContent = e.message;
+  }
+}
+
+async function loadDiary() {
+  const list = document.getElementById('diary-list');
+  const empty = document.getElementById('diary-empty');
+  list.innerHTML = ''; empty.style.display = 'none';
+  try {
+    const rows = await api('/api/parent/diary');
+    if (!rows.length) { empty.style.display = ''; return; }
+    list.innerHTML = rows.map(r => `<div class="diary-entry">
+      <div class="d-date">${escapeHtml(r.entry_date)}</div>
+      ${r.classwork ? `<div class="d-field"><b>Classwork:</b> ${escapeHtml(r.classwork)}</div>` : ''}
+      ${r.homework ? `<div class="d-field"><b>Homework:</b> ${escapeHtml(r.homework)}</div>` : ''}
+      ${r.activity ? `<div class="d-field"><b>Activity:</b> ${escapeHtml(r.activity)}</div>` : ''}
+      ${r.behaviour ? `<div class="d-field"><b>Behaviour:</b> ${escapeHtml(r.behaviour)}</div>` : ''}
+      ${r.remarks ? `<div class="d-field"><b>Remarks:</b> ${escapeHtml(r.remarks)}</div>` : ''}
+    </div>`).join('');
+  } catch (e) {
+    empty.style.display = '';
+    empty.textContent = e.message;
+  }
+}
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await api('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/';
+});
+
+init();
+</script>
+</body>
+</html>

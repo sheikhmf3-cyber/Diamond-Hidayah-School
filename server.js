@@ -21,12 +21,14 @@ const reportCardRoutes = require('./routes/reportcards');
 const diaryRoutes = require('./routes/diary');
 const studentRoutes = require('./routes/students');
 const unitTestRoutes = require('./routes/unittests');
+const parentRoutes = require('./routes/parent');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/reportcards', reportCardRoutes);
 app.use('/api/diary', diaryRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/unittests', unitTestRoutes);
+app.use('/api/parent', parentRoutes);
 
 // Serve the main SPA for all non-API routes
 app.get('*', (req, res) => {
