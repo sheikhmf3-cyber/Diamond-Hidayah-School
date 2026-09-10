@@ -177,7 +177,7 @@ router.get('/result', async (req, res) => {
   const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
   if (!(await feeCleared(s.id)))
-    return res.status(402).json({ error: `Term 1 fees are pending for ${s.name}. Please clear the tuition and term fee at the school office to view results online.` });
+    return res.status(402).json({ error: `Fees pending for "${s.name}". Please clear the fee at the school office to view results and diary online.` });
   const exam = req.query.exam;
   const academic_year = req.query.academic_year || academicYear();
   const validExams = ['unit_test_1', 'unit_test_2', 'term_1', 'term_2'];
@@ -241,7 +241,7 @@ router.get('/diary', async (req, res) => {
   const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
   if (!(await feeCleared(s.id)))
-    return res.status(402).json({ error: `Term 1 fees are pending for ${s.name}. Please clear the tuition and term fee at the school office to view the diary online.` });
+    return res.status(402).json({ error: `Fees pending for "${s.name}". Please clear the fee at the school office to view results and diary online.` });
   const { from, to } = req.query;
   let q = supabase.from('cloud_daily_diary').select('*').eq('student_id', s.id);
   if (from) q = q.gte('entry_date', from);

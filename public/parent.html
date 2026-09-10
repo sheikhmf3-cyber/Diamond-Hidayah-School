@@ -230,7 +230,7 @@ function renderActiveChild() {
 
   const banner = document.getElementById('fee-banner');
   if (student.fee_cleared === false) {
-    banner.textContent = `Term 1 fees are pending for ${student.name}. Please clear the tuition and term fee at the school office to view results and diary online.`;
+    banner.textContent = `Fees pending for "${student.name}". Please clear the fee at the school office to view results and diary online.`;
     banner.style.display = '';
   } else {
     banner.style.display = 'none';
