@@ -12,6 +12,8 @@ router.use(requireLogin, requireParent);
 
 // All students this parent account is allowed to view: the one they
 // originally registered with, plus any added later via POST /children.
+// Each student comes back with a fee_cleared flag (see feeCleared below)
+// so the portal can show a "Fees Pending" badge without a failed request.
 async function myChildren(req) {
   const primaryId = req.session.user.parent_student_id;
   const { data: links } = await supabase
@@ -23,7 +25,27 @@ async function myChildren(req) {
   if (!ids.length) return [];
 
   const { data: students } = await supabase.from('cloud_students').select('*').in('id', ids);
-  return students || [];
+  if (!students || !students.length) return [];
+
+  const { data: feeRows } = await supabase
+    .from('cloud_student_fee_status')
+    .select('student_id, term1_cleared')
+    .in('student_id', ids);
+  const feeMap = {};
+  (feeRows || []).forEach(f => { feeMap[f.student_id] = f.term1_cleared; });
+
+  // No synced fee-status row for a student (e.g. no fee record entered
+  // locally yet) → don't block; only an explicit false blocks access.
+  return students.map(s => ({ ...s, fee_cleared: feeMap[s.id] !== false }));
+}
+
+async function feeCleared(studentId) {
+  const { data } = await supabase
+    .from('cloud_student_fee_status')
+    .select('term1_cleared')
+    .eq('student_id', studentId)
+    .maybeSingle();
+  return !data || data.term1_cleared !== false;
 }
 
 // Resolve which child's data to serve for this request: the one named by
@@ -154,6 +176,8 @@ router.get('/me', async (req, res) => {
 router.get('/result', async (req, res) => {
   const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
+  if (!(await feeCleared(s.id)))
+    return res.status(402).json({ error: `Term 1 fees are pending for ${s.name}. Please clear the tuition and term fee at the school office to view results online.` });
   const exam = req.query.exam;
   const academic_year = req.query.academic_year || academicYear();
   const validExams = ['unit_test_1', 'unit_test_2', 'term_1', 'term_2'];
@@ -216,6 +240,8 @@ router.get('/result', async (req, res) => {
 router.get('/diary', async (req, res) => {
   const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
+  if (!(await feeCleared(s.id)))
+    return res.status(402).json({ error: `Term 1 fees are pending for ${s.name}. Please clear the tuition and term fee at the school office to view the diary online.` });
   const { from, to } = req.query;
   let q = supabase.from('cloud_daily_diary').select('*').eq('student_id', s.id);
   if (from) q = q.gte('entry_date', from);

@@ -47,6 +47,7 @@
     <div class="card" id="select-card">
       <h2>Select School, Class &amp; Roll No.</h2>
       <div class="child-strip" id="child-strip"></div>
+      <div id="fee-banner" class="error-box" style="display:none;"></div>
       <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px;">
         <div style="flex:1; min-width:180px;">
           <label style="display:block; font-size:12px; font-weight:600; color:#4a5568; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">School</label>
@@ -202,7 +203,7 @@ function renderChildStrip() {
     <button class="child-chip${c.id === activeStudentId ? ' active' : ''}" data-id="${c.id}"
       style="padding:6px 14px; border-radius:20px; border:1px solid ${c.id === activeStudentId ? '#2d6a9f' : '#cbd5e0'};
       background:${c.id === activeStudentId ? '#2d6a9f' : '#fff'}; color:${c.id === activeStudentId ? '#fff' : '#4a5568'};
-      font-size:13px; font-weight:600; cursor:pointer;">${escapeHtml(c.name)}</button>
+      font-size:13px; font-weight:600; cursor:pointer;">${escapeHtml(c.name)}${c.fee_cleared === false ? ' ⚠️ Fees Pending' : ''}</button>
   `).join('');
   const pendingChips = pendingRequests.map(p => `
     <span title="Waiting for the school to approve this account for ${escapeHtml(p.name)}"
@@ -226,6 +227,14 @@ function renderActiveChild() {
   document.getElementById('sel-school').innerHTML = `<option>${escapeHtml(student.school)}</option>`;
   document.getElementById('sel-class').innerHTML = `<option>${escapeHtml(student.class_name)}${student.division?' - '+escapeHtml(student.division):''}</option>`;
   document.getElementById('sel-roll').value = student.roll_no || '-';
+
+  const banner = document.getElementById('fee-banner');
+  if (student.fee_cleared === false) {
+    banner.textContent = `Term 1 fees are pending for ${student.name}. Please clear the tuition and term fee at the school office to view results and diary online.`;
+    banner.style.display = '';
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 async function addChild() {

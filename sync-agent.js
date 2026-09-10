@@ -45,9 +45,12 @@ async function pushStudents() {
   else console.log(`[SYNC] Pushed ${rows.length} students to cloud.`);
 }
 
-// ── Push local users (teachers) → Supabase ────────────────────────────────────
+// ── Push local users (teachers + parents) → Supabase ──────────────────────────
 async function pushUsers() {
-  const users = query("SELECT id,name,username,password_hash,role,status,allowed_sections FROM users WHERE status='approved'", []);
+  const users = query(
+    `SELECT id,name,username,password_hash,role,status,allowed_sections,
+            parent_student_id,parent_school,parent_class_name,parent_roll_no
+     FROM users WHERE status='approved'`, []);
   if (!users.length) return;
 
   const rows = users.map(u => ({
@@ -57,7 +60,14 @@ async function pushUsers() {
     password_hash: u.password_hash,
     role: u.role,
     status: u.status,
-    allowed_sections: u.allowed_sections || ''
+    allowed_sections: u.allowed_sections || '',
+    // Only meaningful for role='parent' — carries which local student this
+    // account is approved to view. Without pushing this, a parent account
+    // approved locally would never actually gain access online.
+    parent_student_id: u.parent_student_id || null,
+    parent_school: u.parent_school || '',
+    parent_class_name: u.parent_class_name || '',
+    parent_roll_no: u.parent_roll_no || ''
   }));
 
   const { error } = await supabase
@@ -77,6 +87,51 @@ async function pushUsers() {
     if (ce) console.error('[SYNC] Push teacher_classes error:', ce.message);
     else console.log(`[SYNC] Pushed ${classes.length} teacher class assignments.`);
   }
+}
+
+// Same academic-year math used on the cloud side (routes/parent.js
+// academicYear()) — year rolls over in June.
+function currentAcademicYear() {
+  const now = new Date();
+  const m = now.getMonth();
+  const y = now.getFullYear();
+  const start = m >= 5 ? y : y - 1;
+  return `${start}-${String(start + 1).slice(-2)}`;
+}
+
+// ── Push Term 1 fee-clearance status → Supabase ────────────────────────────────
+// Doesn't sync fee amounts or payment history (those stay local-only, per the
+// school's policy) — just a yes/no "has this student paid enough to unlock
+// the online parent portal for this year" flag, computed here:
+//   required = 50% of tuition_fee + term_fee
+//   paid     = sum of this student's non-deleted payments this academic year
+async function pushFeeStatus() {
+  const year = currentAcademicYear();
+  const fees = query(
+    'SELECT student_id, tuition_fee, term_fee FROM student_fees WHERE academic_year=?', [year]);
+  if (!fees.length) return;
+
+  const rows = fees.map(f => {
+    const paidRow = queryOne(
+      `SELECT COALESCE(SUM(amount),0) AS total FROM payments
+       WHERE student_id=? AND academic_year=? AND (is_deleted IS NULL OR is_deleted=0)`,
+      [f.student_id, year]);
+    const required = (f.tuition_fee || 0) * 0.5 + (f.term_fee || 0);
+    const paid = (paidRow && paidRow.total) || 0;
+    return {
+      student_id: f.student_id,
+      academic_year: year,
+      term1_cleared: paid >= required,
+      updated_at: new Date().toISOString()
+    };
+  });
+
+  const { error } = await supabase
+    .from('cloud_student_fee_status')
+    .upsert(rows, { onConflict: 'student_id' });
+
+  if (error) console.error('[SYNC] Push fee status error:', error.message);
+  else console.log(`[SYNC] Pushed fee status for ${rows.length} students.`);
 }
 
 // ── Pull cloud report cards → local ───────────────────────────────────────────
@@ -255,6 +310,7 @@ async function syncCycle() {
     const rcCount = await pullReportCards();
     const diaryCount = await pullDiaryEntries();
     const utCount = await pullUnitTests();
+    await pushFeeStatus(); // so a fee payment taken today unlocks the portal within this same 2-minute cycle
 
     if (rcCount > 0 || diaryCount > 0 || utCount > 0) {
       console.log(`[SYNC] ✅ Synced: ${rcCount} report card(s), ${diaryCount} diary entry/entries, ${utCount} unit test mark(s).`);
@@ -283,9 +339,10 @@ async function start() {
   await initDb();
 
   // Push local data to cloud on startup
-  console.log('\n[SYNC] Pushing students and users to cloud...');
+  console.log('\n[SYNC] Pushing students, users and fee status to cloud...');
   await pushStudents();
   await pushUsers();
+  await pushFeeStatus();
 
   // First sync immediately
   await syncCycle();
@@ -293,11 +350,13 @@ async function start() {
   // Then every 2 minutes
   setInterval(syncCycle, SYNC_INTERVAL_MS);
 
-  // Re-push students/users every 30 minutes (catches new admissions/staff)
+  // Re-push students/users/fee status every 30 minutes (catches new
+  // admissions/staff and fee payments taken since the last push)
   setInterval(async () => {
-    console.log('\n[SYNC] Refreshing students and users in cloud...');
+    console.log('\n[SYNC] Refreshing students, users and fee status in cloud...');
     await pushStudents();
     await pushUsers();
+    await pushFeeStatus();
   }, 30 * 60 * 1000);
 }
 
