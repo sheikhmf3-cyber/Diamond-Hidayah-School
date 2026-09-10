@@ -226,7 +226,7 @@ router.get('/result', async (req, res) => {
     const obtained_total = subjects.reduce((a, r) => a + r.obtained, 0);
     const percentage = grand_total > 0 ? Math.round((obtained_total / grand_total) * 10000) / 100 : 0;
     return res.json({
-      exam, exam_label: termNum === 1 ? 'Term 1' : 'Term 2', academic_year, subjects,
+      exam, exam_label: termNum === 1 ? 'First Term' : 'Second Term', academic_year, subjects,
       grand_total, obtained_total, percentage,
       grade: termGrade(percentage),
       remarks: (result && result.remarks) || TERM_GRADE_REMARK[termGrade(percentage)] || '',
