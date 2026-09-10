@@ -537,11 +537,12 @@
     <!-- ═══════════════════════════════ PARENT REQUESTS TAB (admin only) ═══════════════════════════════ -->
     <div id="tab-parentreq" style="display:none;">
       <div class="card">
-        <h2>👪 Parent Requests — Additional Children Pending Approval</h2>
-        <p style="font-size:13px;color:#718096;margin-bottom:16px;">A parent already has one approved child on their account and has asked to add another. Verify it's genuinely their child before approving — approving grants that account access to this child's report card, unit test marks and daily diary.</p>
+        <h2>👪 Parent Requests</h2>
+        <p style="font-size:13px;color:#718096;margin-bottom:16px;">Every pending parent-related request, of two kinds. <strong>New registration</strong> rows are brand-new parent logins — these must still be approved on the local system's Parent Accounts screen (the local system assigns that account's id), so they're shown here for visibility only. <strong>Add child</strong> rows are an already-approved parent asking to link a further child — fully actionable here. Verify it's genuinely their child before approving — approving grants that account access to this child's report card, unit test marks and daily diary.</p>
         <table class="data-table" style="width:100%; border-collapse:collapse; font-size:14px;">
           <thead>
             <tr style="text-align:left; border-bottom:2px solid #e2e8f0;">
+              <th style="padding:8px 10px;">Type</th>
               <th style="padding:8px 10px;">Parent</th>
               <th style="padding:8px 10px;">Existing Child</th>
               <th style="padding:8px 10px;">Requested Child</th>
@@ -749,13 +750,18 @@ async function loadParentRequests() {
     empty.style.display = 'none';
     tbody.innerHTML = list.map(req => `
       <tr style="border-bottom:1px solid #edf2f7;">
+        <td style="padding:8px 10px;">${req.kind === 'new_registration'
+          ? '<span style="background:#edf2f7;color:#4a5568;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;">New registration</span>'
+          : '<span style="background:#e6fffa;color:#2c7a7b;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;">Add child</span>'}</td>
         <td style="padding:8px 10px;">${req.parent_name || ''} <span style="color:#a0aec0;">(${req.parent_username || ''})</span></td>
         <td style="padding:8px 10px;">${req.existing_child_name || '—'}</td>
         <td style="padding:8px 10px;"><strong>${req.requested_child?.name || ''}</strong></td>
         <td style="padding:8px 10px;">${req.requested_child?.school || ''} · ${req.requested_child?.class_name || ''}${req.requested_child?.division ? ' '+req.requested_child.division : ''} · Roll ${req.requested_child?.roll_no || ''}</td>
         <td style="padding:8px 10px;">
-          <button class="btn-save" style="padding:5px 12px; font-size:12px;" onclick="decideParentRequest(${req.request_id}, 'approve')">Approve</button>
-          <button style="padding:5px 12px; font-size:12px; background:#fff; color:#c53030; border:1px solid #c53030; border-radius:8px; font-weight:600; cursor:pointer;" onclick="decideParentRequest(${req.request_id}, 'reject')">Reject</button>
+          ${req.kind === 'new_registration'
+            ? '<span class="muted" style="font-size:12px;">Approve on local system → Parent Accounts</span>'
+            : `<button class="btn-save" style="padding:5px 12px; font-size:12px;" onclick="decideParentRequest(${req.request_id}, 'approve')">Approve</button>
+               <button style="padding:5px 12px; font-size:12px; background:#fff; color:#c53030; border:1px solid #c53030; border-radius:8px; font-weight:600; cursor:pointer;" onclick="decideParentRequest(${req.request_id}, 'reject')">Reject</button>`}
         </td>
       </tr>
     `).join('');
