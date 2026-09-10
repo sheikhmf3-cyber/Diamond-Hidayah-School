@@ -232,7 +232,7 @@ function renderActiveChild() {
   document.getElementById('sel-roll').value = student.roll_no || '-';
 
   const infoLine = document.getElementById('student-info-line');
-  infoLine.textContent = `${student.name} — Class ${student.class_name}${student.division ? ' ' + student.division : ''} · Roll ${student.roll_no || '-'}`;
+  infoLine.innerHTML = `<span style="font-weight:700; font-size:16px; color:#1a202c;">${escapeHtml(student.name)}</span> — Class ${escapeHtml(student.class_name)}${student.division ? ' ' + escapeHtml(student.division) : ''} · Roll ${escapeHtml(student.roll_no || '-')}`;
   infoLine.style.display = document.getElementById('exam-tabs').style.display !== 'none' ? '' : 'none';
 
   const banner = document.getElementById('fee-banner');
