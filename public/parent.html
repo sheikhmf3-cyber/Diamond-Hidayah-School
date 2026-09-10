@@ -93,6 +93,8 @@
       <button data-exam="diary">Daily Diary</button>
     </div>
 
+    <div id="student-info-line" style="display:none; font-size:13px; color:#4a5568; margin:-8px 0 14px; font-weight:600;"></div>
+
     <div class="card" id="result-card" style="display:none;">
       <h2 id="result-title">Result</h2>
       <div style="overflow-x:auto;">
@@ -171,6 +173,7 @@ async function init() {
     });
     document.getElementById('view-result-btn').addEventListener('click', () => {
       document.getElementById('exam-tabs').style.display = '';
+      document.getElementById('student-info-line').style.display = '';
       selectExam('unit_test_1', document.querySelector('.exam-tabs button[data-exam="unit_test_1"]'));
     });
     document.getElementById('toggle-add-child-btn').addEventListener('click', () => {
@@ -227,6 +230,10 @@ function renderActiveChild() {
   document.getElementById('sel-school').innerHTML = `<option>${escapeHtml(student.school)}</option>`;
   document.getElementById('sel-class').innerHTML = `<option>${escapeHtml(student.class_name)}${student.division?' - '+escapeHtml(student.division):''}</option>`;
   document.getElementById('sel-roll').value = student.roll_no || '-';
+
+  const infoLine = document.getElementById('student-info-line');
+  infoLine.textContent = `${student.name} — Class ${student.class_name}${student.division ? ' ' + student.division : ''} · Roll ${student.roll_no || '-'}`;
+  infoLine.style.display = document.getElementById('exam-tabs').style.display !== 'none' ? '' : 'none';
 
   const banner = document.getElementById('fee-banner');
   if (student.fee_cleared === false) {
