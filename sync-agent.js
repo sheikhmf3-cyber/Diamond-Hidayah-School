@@ -23,7 +23,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── Push local students → Supabase ────────────────────────────────────────────
 async function pushStudents() {
-  const students = query('SELECT id,name,school,class_name,division,roll_no,guardian_name,phone FROM students', []);
+  const students = query('SELECT id,name,school,class_name,division,roll_no,guardian_name,phone,category FROM students', []);
   if (!students.length) return;
 
   const rows = students.map(s => ({
@@ -34,7 +34,8 @@ async function pushStudents() {
     division: s.division || '',
     roll_no: s.roll_no || '',
     guardian_name: s.guardian_name || '',
-    phone: s.phone || ''
+    phone: s.phone || '',
+    category: s.category || ''
   }));
 
   const { error } = await supabase

@@ -10,6 +10,14 @@ const { requireLogin, requireParent } = require('../middleware/auth');
 const router = express.Router();
 router.use(requireLogin, requireParent);
 
+// Students in these categories (any school, any class) never get the fee
+// gate applied at all, regardless of payment status — matched
+// case-insensitively against cloud_students.category.
+const FEE_EXEMPT_CATEGORIES = ['rte', 'poor', 'scholarship'];
+function isFeeExempt(category) {
+  return FEE_EXEMPT_CATEGORIES.includes(String(category || '').trim().toLowerCase());
+}
+
 // All students this parent account is allowed to view: the one they
 // originally registered with, plus any added later via POST /children.
 // Each student comes back with a fee_cleared flag (see feeCleared below)
@@ -36,14 +44,16 @@ async function myChildren(req) {
 
   // No synced fee-status row for a student (e.g. no fee record entered
   // locally yet) → don't block; only an explicit false blocks access.
-  return students.map(s => ({ ...s, fee_cleared: feeMap[s.id] !== false }));
+  // RTE/Poor/Scholarship students are never blocked, regardless of status.
+  return students.map(s => ({ ...s, fee_cleared: isFeeExempt(s.category) || feeMap[s.id] !== false }));
 }
 
-async function feeCleared(studentId) {
+async function feeCleared(student) {
+  if (isFeeExempt(student.category)) return true;
   const { data } = await supabase
     .from('cloud_student_fee_status')
     .select('term1_cleared')
-    .eq('student_id', studentId)
+    .eq('student_id', student.id)
     .maybeSingle();
   return !data || data.term1_cleared !== false;
 }
@@ -176,7 +186,7 @@ router.get('/me', async (req, res) => {
 router.get('/result', async (req, res) => {
   const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
-  if (!(await feeCleared(s.id)))
+  if (!(await feeCleared(s)))
     return res.status(402).json({ error: `Fees pending for "${s.name}". Please clear the fee at the school office to view results and diary online.` });
   const exam = req.query.exam;
   const academic_year = req.query.academic_year || academicYear();
@@ -240,7 +250,7 @@ router.get('/result', async (req, res) => {
 router.get('/diary', async (req, res) => {
   const { student: s } = await resolveStudent(req);
   if (!s) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
-  if (!(await feeCleared(s.id)))
+  if (!(await feeCleared(s)))
     return res.status(402).json({ error: `Fees pending for "${s.name}". Please clear the fee at the school office to view results and diary online.` });
   const { from, to } = req.query;
   let q = supabase.from('cloud_daily_diary').select('*').eq('student_id', s.id);
