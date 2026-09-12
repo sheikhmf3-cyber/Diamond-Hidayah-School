@@ -253,6 +253,14 @@
             </select>
           </div>
           <div class="form-group">
+            <label>Division</label>
+            <select id="rc-division" onchange="loadRcStudents()">
+              <option value="">All Divisions</option>
+              <option value="A">Division A</option>
+              <option value="B">Division B</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Student</label>
             <select id="rc-student" onchange="loadReportCard()">
               <option value="">— Select Student —</option>
@@ -397,6 +405,14 @@
             </select>
           </div>
           <div class="form-group">
+            <label>Division</label>
+            <select id="ut-division">
+              <option value="">All Divisions</option>
+              <option value="A">Division A</option>
+              <option value="B">Division B</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Academic Year</label>
             <select id="ut-year">
               <option>2026-27</option>
@@ -447,6 +463,14 @@
             <label>Class</label>
             <select id="utr-class" onchange="updateUtrCombinedOption()">
               <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Division</label>
+            <select id="utr-division">
+              <option value="">All Divisions</option>
+              <option value="A">Division A</option>
+              <option value="B">Division B</option>
             </select>
           </div>
           <div class="form-group">
@@ -501,6 +525,14 @@
             <label>Class</label>
             <select id="top5-class" onchange="updateTop5CombinedOption()">
               <option value="">— Select Class —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Division</label>
+            <select id="top5-division">
+              <option value="">All Divisions</option>
+              <option value="A">Division A</option>
+              <option value="B">Division B</option>
             </select>
           </div>
           <div class="form-group">
@@ -785,10 +817,11 @@ function getClassesForSchool(school) {
   return [...new Set(allClasses.filter(c => c.school===school).map(c => c.class_name))];
 }
 
-async function fetchStudents(school, cls) {
+async function fetchStudents(school, cls, division) {
   if (!school || !cls) return [];
   const r = await fetch(`/api/students?school=${encodeURIComponent(school)}&class_name=${encodeURIComponent(cls)}`);
-  const students = r.ok ? await r.json() : [];
+  let students = r.ok ? await r.json() : [];
+  if (division) students = students.filter(s => (s.division||'') === division);
   return students.sort((a,b) => (parseInt(a.roll_no)||9999) - (parseInt(b.roll_no)||9999) || (a.name||'').localeCompare(b.name||''));
 }
 
@@ -806,7 +839,8 @@ function loadRcClasses() {
 async function loadRcStudents() {
   const school = document.getElementById('rc-school').value;
   const cls = document.getElementById('rc-class').value;
-  const students = await fetchStudents(school, cls);
+  const division = document.getElementById('rc-division')?.value || '';
+  const students = await fetchStudents(school, cls, division);
   const sel = document.getElementById('rc-student');
   sel.innerHTML = '<option value="">— Select Student —</option>';
   students.forEach(s => {
@@ -993,6 +1027,7 @@ function utSubjTotal(s) { return s.parts.reduce((a,p) => a + p.max, 0); }
 async function loadUtBulkEntry() {
   const school = document.getElementById('ut-school').value;
   const cls = document.getElementById('ut-class').value;
+  const division = document.getElementById('ut-division')?.value || '';
   const test = document.getElementById('ut-test').value;
   const year = document.getElementById('ut-year').value;
   const status = document.getElementById('ut-load-status');
@@ -1005,7 +1040,7 @@ async function loadUtBulkEntry() {
     const [cr, mr, st] = await Promise.all([
       fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`),
       fetch('/api/unittests?' + new URLSearchParams({ school, class_name: cls, test_name: test, academic_year: year })),
-      fetchStudents(school, cls),
+      fetchStudents(school, cls, division),
     ]);
     if (cr.ok) cdata = await cr.json();
     if (mr.ok) marks = await mr.json();
@@ -1220,6 +1255,7 @@ function updateUtrCombinedOption() {
 async function loadUtReport() {
   const school = document.getElementById('utr-school').value;
   const cls = document.getElementById('utr-class').value;
+  const division = document.getElementById('utr-division')?.value || '';
   const testName = document.getElementById('utr-test').value;
   const year = document.getElementById('utr-year').value;
 
@@ -1231,7 +1267,7 @@ async function loadUtReport() {
   if (!school || !cls) { area.innerHTML = '<p style="color:#718096;">Select a school and class.</p>'; return; }
   area.innerHTML = '<p style="color:#718096;">Loading…</p>';
 
-  let cdata = { subjects: [] }, marks = [];
+  let cdata = { subjects: [] }, marks = [], allowedIds = null;
   try {
     const [cr, mr] = await Promise.all([
       fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`),
@@ -1239,6 +1275,10 @@ async function loadUtReport() {
     ]);
     if (cr.ok) cdata = await cr.json();
     if (mr.ok) marks = await mr.json();
+    if (division) {
+      const divStudents = await fetchStudents(school, cls, division);
+      allowedIds = new Set(divStudents.map(s => String(s.id)));
+    }
   } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
 
   const allSubjects = cdata.subjects || [];
@@ -1248,13 +1288,14 @@ async function loadUtReport() {
 
   const byStudent = {};
   marks.forEach(m => {
+    if (allowedIds && !allowedIds.has(String(m.student_id))) return;
     if (!byStudent[m.student_id]) byStudent[m.student_id] = { student_id: m.student_id, name: m.student_name, roll_no: m.roll_no, subjects: {} };
     byStudent[m.student_id].subjects[m.subject] = m;
   });
   const list = Object.values(byStudent).sort((a,b) => (parseInt(a.roll_no)||9999)-(parseInt(b.roll_no)||9999) || (a.name||'').localeCompare(b.name||''));
   if (!list.length) { area.innerHTML = '<p style="color:#718096;">No marks saved yet for this school, class, year and test.</p>'; return; }
 
-  utrCache = { list, subjects, year, testName, school, cls, reportType };
+  utrCache = { list, subjects, year, testName, school, cls, division, reportType };
   renderUtrTable();
 }
 
@@ -1432,6 +1473,7 @@ function loadTop5Classes() {
 async function loadTop5() {
   const school = document.getElementById('top5-school').value;
   const cls = document.getElementById('top5-class').value;
+  const division = document.getElementById('top5-division')?.value || '';
   const test = document.getElementById('top5-test').value;
   const year = document.getElementById('top5-year').value;
   const reportType = document.getElementById('top5-report-type').value;
@@ -1439,7 +1481,7 @@ async function loadTop5() {
   if (!school || !cls) { area.innerHTML = '<p style="color:#718096;">Select a school and class.</p>'; return; }
   area.innerHTML = '<p style="color:#718096;">Loading…</p>';
 
-  let cdata = { subjects: [] }, marks = [];
+  let cdata = { subjects: [] }, marks = [], allowedIds = null;
   try {
     const [cr, mr] = await Promise.all([
       fetch(`/api/unittests/config?class_name=${encodeURIComponent(cls)}`),
@@ -1447,6 +1489,10 @@ async function loadTop5() {
     ]);
     if (cr.ok) cdata = await cr.json();
     if (mr.ok) marks = await mr.json();
+    if (division) {
+      const divStudents = await fetchStudents(school, cls, division);
+      allowedIds = new Set(divStudents.map(s => String(s.id)));
+    }
   } catch(e) { area.innerHTML = '<p style="color:#e53e3e;">Network error.</p>'; return; }
 
   const allSubjects = cdata.subjects || [];
@@ -1457,6 +1503,7 @@ async function loadTop5() {
   const totals = {}; // student_id -> { name, roll_no, obtained, total }
   marks.forEach(m => {
     if (!subjectNames.has(m.subject)) return;
+    if (allowedIds && !allowedIds.has(String(m.student_id))) return;
     if (!totals[m.student_id]) totals[m.student_id] = { name: m.student_name, roll_no: m.roll_no, obtained: 0, total: 0 };
     totals[m.student_id].obtained += parseFloat(m.obtained_marks) || 0;
     totals[m.student_id].total += parseFloat(m.total_marks) || 0;
@@ -1468,7 +1515,7 @@ async function loadTop5() {
     .sort((a,b) => b.percentage - a.percentage || b.obtained - a.obtained)
     .slice(0, 5);
 
-  top5Cache = { school, cls, test, year, reportType, list };
+  top5Cache = { school, cls, division, test, year, reportType, list };
   renderTop5(list, reportType);
 }
 
