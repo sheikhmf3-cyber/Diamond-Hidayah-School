@@ -109,6 +109,28 @@ async function pushUsers() {
     else console.log(`[SYNC] Removed ${staleIds.length} deleted user(s) from cloud.`);
   }
 
+  // Reconcile staged registrations too — once pulled into the local `users`
+  // table (local_id set), a registration that then gets REJECTED/DELETED
+  // locally (rather than approved) would otherwise linger in
+  // cloud_teacher_registrations / cloud_parent_registrations forever,
+  // showing as "still pending" in the online Parent Requests tab even
+  // though it was already dealt with locally.
+  const { data: teacherRegs } = await supabase.from('cloud_teacher_registrations').select('id, local_id').not('local_id', 'is', null);
+  const staleTeacherRegIds = (teacherRegs || []).filter(r => !allLocalIds.has(r.local_id)).map(r => r.id);
+  if (staleTeacherRegIds.length) {
+    const { error: delErr } = await supabase.from('cloud_teacher_registrations').delete().in('id', staleTeacherRegIds);
+    if (delErr) console.error('[SYNC] Delete stale teacher registrations error:', delErr.message);
+    else console.log(`[SYNC] Removed ${staleTeacherRegIds.length} rejected/deleted teacher registration(s) from cloud.`);
+  }
+
+  const { data: parentRegs } = await supabase.from('cloud_parent_registrations').select('id, local_id').not('local_id', 'is', null);
+  const staleParentRegIds = (parentRegs || []).filter(r => !allLocalIds.has(r.local_id)).map(r => r.id);
+  if (staleParentRegIds.length) {
+    const { error: delErr } = await supabase.from('cloud_parent_registrations').delete().in('id', staleParentRegIds);
+    if (delErr) console.error('[SYNC] Delete stale parent registrations error:', delErr.message);
+    else console.log(`[SYNC] Removed ${staleParentRegIds.length} rejected/deleted parent registration(s) from cloud.`);
+  }
+
   // Push teacher class assignments
   const classes = query('SELECT user_id, school, class_name FROM teacher_classes', []);
   if (classes.length) {
