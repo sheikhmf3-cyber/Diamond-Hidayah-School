@@ -97,6 +97,11 @@
 
     <div class="card" id="result-card" style="display:none;">
       <h2 id="result-title">Result</h2>
+      <div class="exam-tabs" id="report-type-tabs" style="margin-bottom:14px;">
+        <button data-report-type="academic">📘 Academic</button>
+        <button data-report-type="islamic">🕌 Islamic</button>
+        <button data-report-type="combined">📗 Combined</button>
+      </div>
       <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Subject</th><th>Total Marks</th><th>Obtained Marks</th></tr></thead>
@@ -130,6 +135,7 @@ const SCHOOL_CLASSES = {
 let children = [];
 let activeStudentId = null;
 let currentExam = 'unit_test_1';
+let currentReportType = 'academic';
 
 // Numeric classes ("1st".."12th") shown as Roman numerals; non-numeric
 // ones (LKG, UKG, Nursery) shown as-is since they have no Roman equivalent.
@@ -178,9 +184,13 @@ async function init() {
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = '';
-    document.querySelectorAll('.exam-tabs button').forEach(btn => {
+    document.querySelectorAll('#exam-tabs button').forEach(btn => {
       btn.addEventListener('click', () => selectExam(btn.dataset.exam, btn));
     });
+    document.querySelectorAll('#report-type-tabs button').forEach(btn => {
+      btn.addEventListener('click', () => selectReportType(btn.dataset.reportType, btn));
+    });
+    selectReportType(currentReportType);
     document.getElementById('view-result-btn').addEventListener('click', () => {
       document.getElementById('exam-tabs').style.display = '';
       document.getElementById('student-info-line').style.display = '';
@@ -275,8 +285,8 @@ async function addChild() {
 
 function selectExam(exam, btnEl) {
   currentExam = exam;
-  document.querySelectorAll('.exam-tabs button').forEach(b => b.classList.remove('active'));
-  if (!btnEl) btnEl = document.querySelector(`.exam-tabs button[data-exam="${exam}"]`);
+  document.querySelectorAll('#exam-tabs button').forEach(b => b.classList.remove('active'));
+  if (!btnEl) btnEl = document.querySelector(`#exam-tabs button[data-exam="${exam}"]`);
   if (btnEl) btnEl.classList.add('active');
   if (exam === 'diary') {
     document.getElementById('result-card').style.display = 'none';
@@ -289,6 +299,16 @@ function selectExam(exam, btnEl) {
   }
 }
 
+function selectReportType(reportType, btnEl) {
+  currentReportType = reportType;
+  document.querySelectorAll('#report-type-tabs button').forEach(b => b.classList.remove('active'));
+  if (!btnEl) btnEl = document.querySelector(`#report-type-tabs button[data-report-type="${reportType}"]`);
+  if (btnEl) btnEl.classList.add('active');
+  if (currentExam && currentExam !== 'diary' && document.getElementById('exam-tabs').style.display !== 'none') {
+    loadResult(currentExam);
+  }
+}
+
 async function loadResult(exam) {
   const tbody = document.getElementById('result-tbody');
   const summary = document.getElementById('result-summary');
@@ -296,7 +316,7 @@ async function loadResult(exam) {
   document.getElementById('result-title').textContent = EXAM_LABELS[exam] + ' Result';
   tbody.innerHTML = ''; summary.innerHTML = ''; empty.style.display = 'none';
   try {
-    const data = await api(`/api/parent/result?exam=${exam}&student_id=${activeStudentId}`);
+    const data = await api(`/api/parent/result?exam=${exam}&student_id=${activeStudentId}&report_type=${currentReportType}`);
     if (!data.subjects.length) { empty.style.display = ''; return; }
     tbody.innerHTML = data.subjects.map(r => `<tr>
       <td>${escapeHtml(r.subject)}</td><td>${r.total}</td><td>${r.obtained}</td>

@@ -176,6 +176,17 @@ function utGrade(pct) {
 
 const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 
+// Same split used everywhere else in the app: Unit Test subjects come from a
+// fixed vocabulary (exact match), Term/Result subjects are free text a
+// teacher typed in, so those are matched by keyword instead.
+const ISLAMIC_UNIT_TEST_SUBJECTS = ['ISLAMIC', 'ARABIC WRITING', 'ARABIC ORAL'];
+const isIslamicTermSubject = (subject) => /islam|arabic/i.test(subject || '');
+
+function filterByReportType(subjects, reportType, isIslamicFn) {
+  if (reportType === 'combined') return subjects;
+  return subjects.filter(s => isIslamicFn(s.subject) === (reportType === 'islamic'));
+}
+
 router.get('/me', async (req, res) => {
   const { children, student } = await resolveStudent(req);
   if (!student) return res.status(404).json({ error: 'No linked student found for this account. Please contact the school office.' });
@@ -192,6 +203,7 @@ router.get('/result', async (req, res) => {
   const academic_year = req.query.academic_year || academicYear();
   const validExams = ['unit_test_1', 'unit_test_2', 'term_1', 'term_2'];
   if (!validExams.includes(exam)) return res.status(400).json({ error: 'exam must be one of: ' + validExams.join(', ') });
+  const reportType = ['academic', 'islamic', 'combined'].includes(req.query.report_type) ? req.query.report_type : 'academic';
 
   try {
     if (exam === 'unit_test_1' || exam === 'unit_test_2') {
@@ -202,7 +214,8 @@ router.get('/result', async (req, res) => {
         .eq('student_id', s.id).eq('academic_year', academic_year).eq('test_name', testName)
         .order('id');
       if (error) throw error;
-      const subjects = (rows || []).map(r => ({ subject: r.subject, total: num(r.total_marks), obtained: num(r.obtained_marks) }));
+      const allSubjects = (rows || []).map(r => ({ subject: r.subject, total: num(r.total_marks), obtained: num(r.obtained_marks) }));
+      const subjects = filterByReportType(allSubjects, reportType, s => ISLAMIC_UNIT_TEST_SUBJECTS.includes(s));
       const grand_total = subjects.reduce((a, r) => a + r.total, 0);
       const obtained_total = subjects.reduce((a, r) => a + r.obtained, 0);
       const percentage = grand_total > 0 ? Math.round((obtained_total / grand_total) * 10000) / 100 : 0;
@@ -210,9 +223,10 @@ router.get('/result', async (req, res) => {
         .from('cloud_unit_test_remarks')
         .select('remarks, report_type')
         .eq('student_id', s.id).eq('academic_year', academic_year).eq('test_name', testName);
-      const remarkRow = (remarkRows || []).sort((a, b) => (b.report_type === 'combined') - (a.report_type === 'combined'))[0];
+      const remarkRow = (remarkRows || []).find(r => r.report_type === reportType) ||
+        (remarkRows || []).sort((a, b) => (b.report_type === 'combined') - (a.report_type === 'combined'))[0];
       return res.json({
-        exam, exam_label: testName, academic_year, subjects,
+        exam, exam_label: testName, academic_year, report_type: reportType, subjects,
         grand_total, obtained_total, percentage,
         grade: utGrade(percentage),
         remarks: (remarkRow && remarkRow.remarks) || UT_GRADE_REMARKS[utGrade(percentage)] || '',
@@ -224,19 +238,20 @@ router.get('/result', async (req, res) => {
     const { data: result } = await supabase
       .from('cloud_results').select('*')
       .eq('student_id', s.id).eq('academic_year', academic_year).maybeSingle();
-    let subjects = [];
+    let allSubjects = [];
     if (result) {
       const { data: subjRows } = await supabase
         .from('cloud_result_subjects')
         .select(`subject, ${col[0]}, ${col[1]}`)
         .eq('cloud_result_id', result.id).order('id');
-      subjects = (subjRows || []).map(r => ({ subject: r.subject, total: num(r[col[0]]), obtained: num(r[col[1]]) }));
+      allSubjects = (subjRows || []).map(r => ({ subject: r.subject, total: num(r[col[0]]), obtained: num(r[col[1]]) }));
     }
+    const subjects = filterByReportType(allSubjects, reportType, isIslamicTermSubject);
     const grand_total = subjects.reduce((a, r) => a + r.total, 0);
     const obtained_total = subjects.reduce((a, r) => a + r.obtained, 0);
     const percentage = grand_total > 0 ? Math.round((obtained_total / grand_total) * 10000) / 100 : 0;
     return res.json({
-      exam, exam_label: termNum === 1 ? 'First Term' : 'Second Term', academic_year, subjects,
+      exam, exam_label: termNum === 1 ? 'First Term' : 'Second Term', academic_year, report_type: reportType, subjects,
       grand_total, obtained_total, percentage,
       grade: termGrade(percentage),
       remarks: (result && result.remarks) || TERM_GRADE_REMARK[termGrade(percentage)] || '',
