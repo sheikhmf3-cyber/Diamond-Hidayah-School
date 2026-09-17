@@ -630,8 +630,8 @@ async function pullTeacherRegistrations() {
         localId = existing.id;
       } else {
         const info = run(
-          'INSERT INTO users (name,username,password_hash,role,status) VALUES (?,?,?,?,?)',
-          [en.name, en.username, en.password_hash, 'teacher', 'pending']
+          'INSERT INTO users (name,username,password_hash,role,status,phone) VALUES (?,?,?,?,?,?)',
+          [en.name, en.username, en.password_hash, 'teacher', 'pending', en.phone || '']
         );
         localId = info.lastInsertRowid;
       }

@@ -10,9 +10,9 @@ const router = express.Router();
 // local approval screen. Once approved locally, the existing users push
 // carries it back up to cloud_users so the teacher can log in here too.
 router.post('/register', async (req, res) => {
-  const { name, username, password, classes } = req.body;
-  if (!name || !username || !password)
-    return res.status(400).json({ error: 'Name, username, and password are required.' });
+  const { name, username, password, classes, phone } = req.body;
+  if (!name || !username || !password || !phone)
+    return res.status(400).json({ error: 'Name, username, password, and phone number are required.' });
   if (password.length < 4)
     return res.status(400).json({ error: 'Password must be at least 4 characters.' });
 
@@ -24,7 +24,7 @@ router.post('/register', async (req, res) => {
 
   const password_hash = await bcrypt.hash(password, 10);
   const { error } = await supabase.from('cloud_teacher_registrations').insert({
-    name: name.trim(), username: uname, password_hash, classes: classes || ''
+    name: name.trim(), username: uname, password_hash, classes: classes || '', phone: phone.trim()
   });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true, message: 'Registered. Pending admin approval.' });
