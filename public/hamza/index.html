@@ -41,6 +41,7 @@ select,input{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid va
 <header><div class="wrap"><h1>Hamza Test Prep</h1>
 <nav class="row" id="nav"></nav></div></header>
 <main class="wrap" id="app"><p class="muted">Loading…</p></main>
+<script src="data.js"></script>
 <script>
 const SKILLS={facts:"About the test",grammar:"Grammar & spelling",vocab:"Vocabulary",reading:"Reading",listening:"Listening",strategy:"Writing & speaking"};
 const TABS=[["notes","Study notes"],["papers","Sample papers"],["practice","Practice"],["pdfs","PDFs"]];
@@ -93,7 +94,7 @@ function pdfs(){
  const f=[["hamza-sample-papers.pdf","Sample papers (all four)"],["hamza-drill-answer-keys.pdf","Drill answer keys"]];
  app.append(el("h2",{},"PDF downloads"),...f.map(([u,t])=>el("div",{class:"card"},el("strong",{},t),el("div",{},el("a",{class:"btn primary",href:u,target:"_blank"},"Open"),el("a",{class:"btn",href:u,download:""},"Download")))))}
 addEventListener("hashchange",()=>D&&route());
-fetch("data.json").then(r=>r.json()).then(d=>{D=d;route()}).catch(e=>{app.textContent="Could not load data: "+e});
+D=window.HAMZA_DATA;route();
 </script>
 </body>
 </html>
