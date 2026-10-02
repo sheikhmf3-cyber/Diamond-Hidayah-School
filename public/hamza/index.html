@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hamza Test Prep</title>
+<link rel="icon" href="favicon.svg">
+<style>
+:root{--bg:#f7f6f2;--surface:#fff;--ink:#1c1b19;--muted:#6b6860;--line:#e3e0d8;--accent:#0f6b5c;--ok:#1a7f4b;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--surface:#201f1c;--ink:#efede6;--muted:#a09d94;--line:#34322d;--accent:#4fc3ad;--ok:#5ccf92;--bad:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}
+header{border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:5}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+header .wrap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+h1{font-size:18px;margin:0 12px 0 0}
+nav button{font:inherit;border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer}
+nav button[aria-current=true]{background:var(--accent);color:#fff}
+main{padding:24px 16px 64px}
+h2{font-size:26px;margin:0 0 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+.muted{color:var(--muted)}
+.ar{direction:rtl;font-size:1.25em;font-family:"Noto Naskh Arabic","Segoe UI",serif}
+a,.btn{color:var(--accent)}
+.btn{display:inline-block;font:inherit;border:1px solid var(--accent);background:none;padding:6px 14px;border-radius:8px;cursor:pointer;text-decoration:none;margin:4px 6px 4px 0}
+.btn.primary{background:var(--accent);color:#fff}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.kicker{font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.04em}
+table{border-collapse:collapse;width:100%;font-size:14px;display:block;overflow-x:auto}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left}
+.tip{border-left:4px solid var(--accent);padding:8px 14px;background:var(--bg);border-radius:6px}
+.opt{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0;cursor:pointer}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}
+.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.pass{white-space:pre-wrap;background:var(--bg);padding:10px 14px;border-radius:8px;font-size:15px}
+select,input{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>Hamza Test Prep</h1>
+<nav class="row" id="nav"></nav></div></header>
+<main class="wrap" id="app"><p class="muted">Loading…</p></main>
+<script>
+const SKILLS={facts:"About the test",grammar:"Grammar & spelling",vocab:"Vocabulary",reading:"Reading",listening:"Listening",strategy:"Writing & speaking"};
+const TABS=[["notes","Study notes"],["papers","Sample papers"],["practice","Practice"],["pdfs","PDFs"]];
+let D,tab="notes";
+function el(t,p,...k){const e=document.createElement(t);for(const[a,v]of Object.entries(p||{})){if(a==="class")e.className=v;else if(a.startsWith("on"))e.addEventListener(a.slice(2),v);else if(v!=null)e.setAttribute(a,v)}for(const c of k.flat())if(c!=null)e.append(c);return e}
+const app=document.getElementById("app");
+function nav(){const n=document.getElementById("nav");n.replaceChildren(...TABS.map(([k,l])=>el("button",{"aria-current":tab===k,onclick:()=>{location.hash=k}},l)))}
+function route(){const h=(location.hash||"#notes").slice(1).split("/");tab=h[0];nav();app.replaceChildren();
+ ({notes:()=>notes(h[1]),papers:()=>papers(h[1]),practice:practice,pdfs:pdfs}[tab]||(()=>notes()))();scrollTo(0,0)}
+function block(b){
+ if(b.kind==="p")return el("p",{},b.en);
+ if(b.kind==="h")return el("h3",{},b.text);
+ if(b.kind==="tip")return el("p",{class:"tip"},b.text);
+ if(b.kind==="bullets")return el("ul",{},b.items.map(i=>el("li",{},i)));
+ if(b.kind==="ar")return el("div",{class:"card"},el("div",{class:"ar"},b.ar),el("div",{},b.en),el("div",{class:"muted"},b.why));
+ if(b.kind==="table")return el("table",{},el("thead",{},el("tr",{},b.headers.map(h=>el("th",{},h)))),el("tbody",{},b.rows.map(r=>el("tr",{},r.map(c=>el("td",{},c))))));
+ return el("span")}
+function notes(id){
+ if(!id){app.append(el("h2",{},"Study notes"),el("p",{class:"muted"},`${D.chapters.length} chapters`),
+  ...D.chapters.map(c=>el("a",{href:"#notes/"+c.id,style:"text-decoration:none;color:inherit"},el("div",{class:"card"},el("strong",{},c.title),el("div",{class:"ar muted"},c.titleAr),el("div",{class:"muted"},c.lead)))));return}
+ const c=D.chapters.find(x=>x.id===id);if(!c)return notes();
+ app.append(el("a",{href:"#notes"},"← All chapters"),el("h2",{},c.title),el("div",{class:"ar"},c.titleAr),el("p",{class:"muted"},c.lead),...c.blocks.map(block))}
+function papers(id){
+ if(!id){app.append(el("h2",{},"Sample papers"),el("div",{class:"grid"},...D.papers.map(p=>el("div",{class:"card"},el("div",{class:"kicker"},p.kicker),el("h3",{},p.title),el("p",{class:"muted"},p.blurb),el("ul",{},p.mix.map(m=>el("li",{},m))),el("a",{class:"btn primary",href:"#papers/"+p.id},"Start paper")))));return}
+ const p=D.papers.find(x=>x.id===id);if(!p)return papers();
+ app.append(el("a",{href:"#papers"},"← All papers"),el("h2",{},p.kicker+": "+p.title));
+ quiz(D.questions.filter(q=>q.paper===p.paper),true)}
+function practice(){
+ const s=el("select",{},el("option",{value:""},"All skills"),Object.entries(SKILLS).map(([k,v])=>el("option",{value:k},v)));
+ const l=el("select",{},el("option",{value:""},"All levels"),["A2","B1","B2","C1"].map(v=>el("option",{value:v},v)));
+ const n=el("input",{type:"number",min:5,max:100,value:10,style:"width:80px"});
+ const out=el("div");
+ const go=()=>{let qs=D.questions.filter(q=>(!s.value||q.skill===s.value)&&(!l.value||q.level===l.value));
+  qs=qs.map(q=>[Math.random(),q]).sort((a,b)=>a[0]-b[0]).slice(0,+n.value||10).map(x=>x[1]);out.replaceChildren();quiz(qs,false,out)};
+ app.append(el("h2",{},"Practice"),el("div",{class:"row"},s,l,n,el("button",{class:"btn primary",onclick:go},"New set")),out);go()}
+function quiz(qs,paper,host){
+ host=host||app;let done=0,right=0;const score=el("p",{class:"muted"},`0 / ${qs.length} answered`);
+ host.append(score);
+ qs.forEach((q,i)=>{
+  const exp=el("div",{class:"muted",hidden:true},"Explanation: "+q.explainEn);
+  const opts=q.options.map((o,j)=>{const b=el("button",{class:"opt",onclick:()=>{
+    if(card.dataset.d)return;card.dataset.d=1;done++;if(j===q.answer)right++;
+    b.classList.add(j===q.answer?"ok":"bad");opts[q.answer].classList.add("ok");exp.hidden=false;
+    score.textContent=`${right} correct of ${done} answered (${qs.length} total)`}},o);return b});
+  const card=el("div",{class:"card"},el("div",{class:"kicker"},`${i+1}/${qs.length} · ${SKILLS[q.skill]} · ${q.level}`),
+   q.passage?el("div",{},el("strong",{},q.passageTitle||""),el("div",{class:"pass"},q.passage)):null,
+   el("p",{},el("strong",{},q.stem)),el("div",{class:"muted"},q.askEn),...opts,exp);
+  host.append(card)})}
+function pdfs(){
+ const f=[["hamza-sample-papers.pdf","Sample papers (all four)"],["hamza-drill-answer-keys.pdf","Drill answer keys"]];
+ app.append(el("h2",{},"PDF downloads"),...f.map(([u,t])=>el("div",{class:"card"},el("strong",{},t),el("div",{},el("a",{class:"btn primary",href:u,target:"_blank"},"Open"),el("a",{class:"btn",href:u,download:""},"Download")))))}
+addEventListener("hashchange",()=>D&&route());
+fetch("data.json").then(r=>r.json()).then(d=>{D=d;route()}).catch(e=>{app.textContent="Could not load data: "+e});
+</script>
+</body>
+</html>
