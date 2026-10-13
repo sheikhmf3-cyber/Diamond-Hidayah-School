@@ -284,6 +284,15 @@ h2::after {
 .note a { color: var(--teal-700); font-weight: 600; text-decoration: none; }
 .note a:hover { text-decoration: underline; }
 
+
+.btn.whatsapp { background: #25d366; color: #073b1d; box-shadow: 0 8px 20px -6px rgba(37,211,102,.6); }
+.btn.whatsapp:hover { background: #1ebe5a; }
+.nav-links a.nav-wa { display: inline-flex; align-items: center; gap: .4rem; color: #128c4a; }
+.nav-links a.nav-wa:hover { background: #e8fbf0; color: #0b6b37; }
+.contact-alt { display: grid; gap: .8rem; margin-bottom: 1.8rem; }
+.divider { display: flex; align-items: center; gap: 1rem; color: var(--muted); font-size: .85rem; margin-bottom: 1.6rem; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
 /* Footer */
 footer { background: var(--teal-900); color: rgba(255,255,255,.75); text-align: center; padding: 2.6rem 0; font-size: .92rem; }
 footer .foot-logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: #fff; margin-bottom: .4rem; }
@@ -342,6 +351,7 @@ footer .foot-logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; c
         <li><a href="#skills">Skills</a></li>
         <li><a href="#experience">Experience</a></li>
         <li><a href="#blog">Blog</a></li>
+        <li><a href="https://wa.me/917387856778?text=Hello%2C%20I%20saw%20your%20portfolio%20and%20would%20like%20to%20discuss%20a%20project." target="_blank" rel="noopener" class="nav-wa"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 3 1.2 3 .8 3.6.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4zM12 2a10 10 0 00-8.6 15L2 22l5.1-1.3A10 10 0 1012 2z"/></svg>WhatsApp</a></li>
         <li><a href="#contact" class="nav-cta">Contact</a></li>
       </ul>
     </div>
@@ -558,6 +568,10 @@ footer .foot-logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; c
       <p class="contact-intro reveal">Please share your requirements. I will review and respond promptly.</p>
 
       <div class="contact-info reveal">
+        <div class="contact-alt">
+          <a href="https://wa.me/917387856778?text=Hello%2C%20I%20saw%20your%20portfolio%20and%20would%20like%20to%20discuss%20a%20project." target="_blank" rel="noopener" class="btn whatsapp"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 3 1.2 3 .8 3.6.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4zM12 2a10 10 0 00-8.6 15L2 22l5.1-1.3A10 10 0 1012 2z"/></svg>Chat on WhatsApp</a>
+        </div>
+        <div class="divider">or send a message</div>
         <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field">
           <input type="hidden" name="form-name" value="contact" />
           <p style="display: none;">
